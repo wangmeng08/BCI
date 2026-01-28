@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QMainWindow>
 #include "enuminfo.h"
+#include "datamanager.h"
 #include "db.h"
 class BaseWindow : public QMainWindow
 {
@@ -38,6 +39,7 @@ protected:
 
     ConnectState m_ConnectSate = ConnectState::DISCONNECT;
     EmitState m_State = EmitState::IDLE;
+    DataManager *m_DataManager = nullptr;
 signals:
     void heartTimerStart();
     void heartTimerStop();

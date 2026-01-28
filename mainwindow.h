@@ -51,7 +51,6 @@ private:
     QVector<QLineEdit *> m_VectorListHCD;
     bool m_IsInAdvance = false;
     bool m_IsInEdit = false;
-    DataManager *m_DataManager = nullptr;
     Ui::MainWindow *ui;
 };
 #endif // MAINWINDOW_H

@@ -1,6 +1,6 @@
 #ifndef DB_H
 #define DB_H
-
+#include <array>
 #include <QObject>
 #include <QSqlDatabase>
 #include <QSharedPointer>
@@ -19,19 +19,23 @@ public:
        }
 };
 
-class Profile{
+class BaseProfile{
 public:
     int indexId = 0;
     QString profileName = "default";
-    double isppa = 10;
-    double rip = 1;
     int period = 60;
-    int dc = 50;
     int timer = 60;
-    double depth = 2;
-    double freq = 500;
     double temp = 33.2;
     double voltage = 29.55;
+};
+
+class Profile : public BaseProfile{
+public:
+    double isppa = 10;
+    double rip = 1;
+    int dc = 50;
+    double depth = 2;
+    double freq = 500;
     double burstLen = 5;
     QVector<DetailInfo *> infoList;
     Profile(){
@@ -107,6 +111,58 @@ public:
     }
 };
 
+class ProfileLIFU : public BaseProfile{
+public:
+    double dutyc = 50;
+    static constexpr int ValueCount = 128;
+    std::array<int, ValueCount> values;
+    ProfileLIFU()
+    {
+        values.fill(0);
+    }
+    ~ProfileLIFU()
+    {
+
+    }
+
+    void CopyInfo(const ProfileLIFU* other) {
+        if (!other) return;
+
+        profileName = other->profileName;
+        period = other->period;
+        timer = other->timer;
+        dutyc = other->dutyc;
+        temp = other->temp;
+        voltage = other->voltage;
+
+        for(int i=0; i<ValueCount; i++)
+        {
+            values[i] = other->values[i];
+        }
+    }
+
+    QString GetInfo() const
+    {
+        QString infoStr = QString(
+                    "ProfileName: %1, IndexId: %2, dutyc: %3, Period: %4, timer: %5, "
+                    "temp: %6, voltage: %7\n"
+                ).arg(profileName)
+                 .arg(indexId)
+                 .arg(dutyc)
+                 .arg(period)
+                 .arg(timer)
+                 .arg(temp)
+                 .arg(voltage);
+
+        infoStr += "DetailInfo List: ";
+        for(int i=0; i<ValueCount; i++)
+        {
+            infoStr += QString("%1, ").arg(values[i]);
+        }
+        return infoStr;
+    }
+};
+
 class DB : public QObject
 {
     Q_OBJECT
@@ -115,17 +171,22 @@ public:
     static DB *GetInstance();
 
     bool ProfileCreate(QSharedPointer<Profile> profile, bool isDefault = false);
-
+    bool ProfileCreateLIFU(QSharedPointer<ProfileLIFU> profile, bool isDefault = false);
     bool ProfileDelete(int indexId);
     bool ProfileModifyInfo(QSharedPointer<Profile> profile, QSharedPointer<Profile> targetProfile);
+    bool ProfileModifyInfoLIFU(QSharedPointer<ProfileLIFU> profile, QSharedPointer<ProfileLIFU> targetProfile);
 
     QVector<QSharedPointer<Profile>> ProfileGetAllInfo();
+    QVector<QSharedPointer<ProfileLIFU>> ProfileGetAllInfoLIFU();
 signals:
 
 private:
 
   private:
     bool CreateConnection();
+
+    void CreateTableLIFUProfile();
+    void CreateTableLIFUProfileValue();
 
     void CreateTableProfile();
 

@@ -22,7 +22,8 @@ SOURCES += \
     option.cpp \
     profileload.cpp \
     savedialog.cpp \
-    serialmanager1.cpp
+    serialmanager1.cpp \
+    txitem.cpp
 
 HEADERS += \
     basewindow.h \
@@ -38,7 +39,8 @@ HEADERS += \
     option.h \
     profileload.h \
     savedialog.h \
-    serialmanager1.h
+    serialmanager1.h \
+    txitem.h
 
 FORMS += \
     choosetype.ui \
@@ -47,7 +49,8 @@ FORMS += \
     messageinfo.ui \
     option.ui \
     profileload.ui \
-    savedialog.ui
+    savedialog.ui \
+    txitem.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

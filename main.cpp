@@ -11,12 +11,12 @@ int main(int argc, char *argv[])
     ChooseType *dialog = new ChooseType(selectType);
     dialog->exec();
     if(selectType == 0){
-        DataManager::GetInstance()->m_ClinicalMode = ClinicalMode::HIFU;
+        DataManager::GetInstance()->SetClinicalMode(ClinicalMode::HIFU);
         MainWindow w;
         w.show();
         return a.exec();
     }
-    DataManager::GetInstance()->m_ClinicalMode = ClinicalMode::LIFU;
+    DataManager::GetInstance()->SetClinicalMode(ClinicalMode::LIFU);
     MainWindowLIFU w;
     w.show();
     return a.exec();

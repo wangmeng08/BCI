@@ -12,7 +12,7 @@ class ProfileLoad : public QDialog
     Q_OBJECT
 
 public:
-    explicit ProfileLoad(int &loadIndex, QWidget *parent = nullptr);
+    explicit ProfileLoad(int &loadIndex,  QWidget *parent = nullptr);
     ~ProfileLoad();
 
 private:

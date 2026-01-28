@@ -9,16 +9,32 @@ ProfileLoad::ProfileLoad(int &loadIndex, QWidget *parent) :
     ui->setupUi(this);
     setWindowFlags(Qt::FramelessWindowHint);
     setWindowModality(Qt::WindowModality::ApplicationModal);
-    for(int i=0; i<DataManager::GetInstance()->m_ProfileList.size(); i++)
+    if(DataManager::GetInstance()->GetClinicalMode() == ClinicalMode::HIFU)
     {
-        auto profile = DataManager::GetInstance()->m_ProfileList[i];
-        ui->cmbProfile->addItem(profile->profileName);
-        if(profile == DataManager::GetInstance()->m_CurrentProfile)
+        for(int i=0; i<DataManager::GetInstance()->m_ProfileList.size(); i++)
         {
-            m_CurrentIndex = i;
+            auto profile = DataManager::GetInstance()->m_ProfileList[i];
+            ui->cmbProfile->addItem(profile->profileName);
+            if(profile == DataManager::GetInstance()->m_CurrentProfile)
+            {
+                m_CurrentIndex = i;
+            }
         }
+        ui->cmbProfile->setCurrentIndex(m_CurrentIndex);
     }
-    ui->cmbProfile->setCurrentIndex(m_CurrentIndex);
+    else if(DataManager::GetInstance()->GetClinicalMode() == ClinicalMode::LIFU)
+    {
+        for(int i=0; i<DataManager::GetInstance()->m_ProfileListLIFU.size(); i++)
+        {
+            auto profile = DataManager::GetInstance()->m_ProfileListLIFU[i];
+            ui->cmbProfile->addItem(profile->profileName);
+            if(profile == DataManager::GetInstance()->m_CurrentProfileLIFU)
+            {
+                m_CurrentIndex = i;
+            }
+        }
+        ui->cmbProfile->setCurrentIndex(m_CurrentIndex);
+    }
     m_LoadIndex = &loadIndex;
     connect(ui->btnCancel, &QPushButton::clicked, this, &ProfileLoad::OnClickCancle);
     connect(ui->btnLoad, &QPushButton::clicked, this, &ProfileLoad::OnClickLoad);

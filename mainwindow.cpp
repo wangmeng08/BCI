@@ -55,7 +55,6 @@ void MainWindow::InitData()
     m_VectorListHCD.append(ui->lblHCD2);
     m_VectorListHCD.append(ui->lblHCD3);
     m_VectorListHCD.append(ui->lblHCD4);
-    m_DataManager = DataManager::GetInstance();
     OnClickCancel();
     OnModeAdvanceRFChange();
     OnModePowerLimitChange();
@@ -197,6 +196,12 @@ void MainWindow::OnClickSave()
         profile->timer = ui->lblTimer->text().toInt();
         profile->voltage = ui->lblVoltage->text().toDouble();
     }
+    for(int i=0; i<4; i++)
+    {
+        profile->infoList[i]->delay = m_VectorListDelay[i]->text().toDouble();
+        profile->infoList[i]->freq = m_VectorListFreq[i]->text().toDouble();
+        profile->infoList[i]->hcd = m_VectorListHCD[i]->text().toDouble();
+    }
     bool res = true;
     switch(saveType)
     {
@@ -214,7 +219,6 @@ void MainWindow::OnClickSave()
         }
         break;
     case(3):
-        OnClickCancel();
         break;
     default:
         break;
@@ -222,6 +226,7 @@ void MainWindow::OnClickSave()
     if(res)
     {
         SetEditMode(false);
+        OnClickCancel();
     }
 }
 

@@ -11,6 +11,7 @@ BaseWindow::BaseWindow(QWidget *parent)
     InitLogManager();
     InitSerialManager();
     m_DB = DB::GetInstance();
+    m_DataManager = DataManager::GetInstance();
     connect(EventManager::GetInstance(), &EventManager::writeLog, this, &BaseWindow::writeLog);
 }
 

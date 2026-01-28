@@ -17,6 +17,16 @@ bool DataManager::IsNameUse(QString profileName, int excepetIndexID)
     return false;
 }
 
+bool DataManager::IsNameUseLIFU(QString profileName, int excepetIndexID)
+{
+    for(const auto &profile : m_ProfileListLIFU)
+    {
+        if(profile->profileName == profileName && profile->indexId != excepetIndexID)
+            return true;
+    }
+    return false;
+}
+
 bool DataManager::SaveInfoToCurrentProfile(QSharedPointer<Profile> profile)
 {
     if(m_CurrentProfile->indexId == 1 && profile->profileName != m_CurrentProfile->profileName)
@@ -30,6 +40,29 @@ bool DataManager::SaveInfoToCurrentProfile(QSharedPointer<Profile> profile)
         return false;
     }
     bool res = DB::GetInstance()->ProfileModifyInfo(profile, m_CurrentProfile);
+    if(!res)
+    {
+        MessageInfo::ShowInformation(tr("Save profile failed"));
+    }
+    else{
+        MessageInfo::ShowInformation(tr("Save profile info success"));
+    }
+    return res;
+}
+
+bool DataManager::SaveInfoToCurrentProfileLIFU(QSharedPointer<ProfileLIFU> profile)
+{
+    if(m_CurrentProfileLIFU->indexId == 1 && profile->profileName != m_CurrentProfileLIFU->profileName)
+    {
+        MessageInfo::ShowInformation(tr("Save failed, the default profile's name cannot be modified"));
+        return false;
+    }
+    if(IsNameUseLIFU(profile->profileName, m_CurrentProfileLIFU->indexId))
+    {
+        MessageInfo::ShowInformation(tr("Save failed, the profile name is already in use"));
+        return false;
+    }
+    bool res = DB::GetInstance()->ProfileModifyInfoLIFU(profile, m_CurrentProfileLIFU);
     if(!res)
     {
         MessageInfo::ShowInformation(tr("Save profile failed"));
@@ -56,9 +89,25 @@ bool DataManager::SaveInfoToDefaultProfile(QSharedPointer<Profile> profile)
     return res;
 }
 
+bool DataManager::SaveInfoToDefaultProfileLIFU(QSharedPointer<ProfileLIFU> profile)
+{
+    QSharedPointer<ProfileLIFU> defaultProfile = m_ProfileListLIFU[0];
+    profile->profileName = defaultProfile->profileName;
+    bool res = DB::GetInstance()->ProfileModifyInfoLIFU(profile, defaultProfile);
+    if(!res)
+    {
+        MessageInfo::ShowInformation(tr("Save info to default profile failed"));
+    }
+    else{
+        m_CurrentProfileLIFU = defaultProfile;
+        MessageInfo::ShowInformation(tr("Save info to default profile success"));
+    }
+    return res;
+}
+
 bool DataManager::SaveInfoToNewProfile(QSharedPointer<Profile> profile)
 {
-    if(IsNameUse(profile->profileName, m_CurrentProfile->indexId))
+    if(IsNameUse(profile->profileName))
     {
         MessageInfo::ShowInformation(tr("Save failed, the profile name is already in use"));
         return false;
@@ -74,6 +123,55 @@ bool DataManager::SaveInfoToNewProfile(QSharedPointer<Profile> profile)
         MessageInfo::ShowInformation(tr("Save a new profile success"));
     }
     return res;
+}
+
+bool DataManager::SaveInfoToNewProfileLIFU(QSharedPointer<ProfileLIFU> profile)
+{
+    if(IsNameUseLIFU(profile->profileName))
+    {
+        MessageInfo::ShowInformation(tr("Save failed, the profile name is already in use"));
+        return false;
+    }
+    bool res = DB::GetInstance()->ProfileCreateLIFU(profile);
+    if(!res)
+    {
+        MessageInfo::ShowInformation(tr("Save a new profile failed"));
+    }
+    else{
+        m_ProfileListLIFU.append(profile);
+        m_CurrentProfileLIFU = profile;
+        MessageInfo::ShowInformation(tr("Save a new profile success"));
+    }
+    return res;
+}
+
+void DataManager::GetAllProfileInfo()
+{
+    m_ProfileList = DB::GetInstance()->ProfileGetAllInfo();
+    if(m_ProfileList.size()==0)
+        return;
+    m_CurrentProfile = m_ProfileList[0];
+}
+
+void DataManager::GetAllProfileInfoLIFU()
+{
+    m_ProfileListLIFU = DB::GetInstance()->ProfileGetAllInfoLIFU();
+    if(m_ProfileListLIFU.size()==0)
+        return;
+    m_CurrentProfileLIFU = m_ProfileListLIFU[0];
+}
+
+void DataManager::SetClinicalMode(ClinicalMode mode)
+{
+    m_ClinicalMode = mode;
+    if(mode == ClinicalMode::HIFU)
+    {
+        GetAllProfileInfo();
+    }
+    else if(mode == ClinicalMode::LIFU)
+    {
+        GetAllProfileInfoLIFU();
+    }
 }
 
 void DataManager::SetOptionInfo(bool isUsePowerLimit, bool isAdvanceRFMode, TriggerMode mode)
@@ -94,11 +192,13 @@ void DataManager::SetOptionInfo(bool isUsePowerLimit, bool isAdvanceRFMode, Trig
         emit triggerModeChange();
     }
 }
+
+ClinicalMode DataManager::GetClinicalMode()
+{
+    return m_ClinicalMode;
+}
 DataManager::DataManager(QObject *parent)
     : QObject{parent}
 {
-    m_ProfileList = DB::GetInstance()->ProfileGetAllInfo();
-    if(m_ProfileList.size()==0)
-        return;
-    m_CurrentProfile = m_ProfileList[0];
+
 }
