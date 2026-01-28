@@ -93,12 +93,14 @@ void MainWindowLIFU::OnClickLoad()
 
 void MainWindowLIFU::OnClickOff()
 {
-
+    SetEmitState(EmitState::IDLE);
+    UpdateBtnState();
 }
 
 void MainWindowLIFU::OnClickOn()
 {
-
+    SetEmitState(EmitState::ON);
+    UpdateBtnState();
 }
 
 void MainWindowLIFU::OnClickSave()

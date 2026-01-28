@@ -339,7 +339,6 @@ bool DB::ProfileModifyInfoLIFU(QSharedPointer<ProfileLIFU> profile, QSharedPoint
         db.close();
         return false;
     }
-    qDebug() << "affected rows:" << query.numRowsAffected();
     query.prepare(
         "UPDATE lifu_profile_value SET value=? "
         "WHERE profile_id=? AND idx=?"
@@ -357,13 +356,14 @@ bool DB::ProfileModifyInfoLIFU(QSharedPointer<ProfileLIFU> profile, QSharedPoint
             return false;
         }
     }
-    qDebug() << "affected rows:" << query.numRowsAffected();
     if (!db.commit()) {
         qWarning() << "commit failed";
         db.close();
         return false;
     }
     targetProfile->CopyInfo(profile.data());
+    QString logInfo = QString("UPDATE lifu_profiles set %1, where index = %2").arg(targetProfile->GetInfo()).arg(targetProfile->indexId);
+    WriteLog(logInfo);
     db.close();
     return true;
 }

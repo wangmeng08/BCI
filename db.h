@@ -159,6 +159,7 @@ public:
         {
             infoStr += QString("%1, ").arg(values[i]);
         }
+        infoStr + "\n";
         return infoStr;
     }
 };
