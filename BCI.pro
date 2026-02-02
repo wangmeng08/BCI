@@ -16,13 +16,13 @@ SOURCES += \
     eventmanager.cpp \
     logmanager.cpp \
     main.cpp \
-    mainwindow.cpp	\
+    mainwindowhifu.cpp \
     mainwindowlifu.cpp \
     messageinfo.cpp \
     option.cpp \
     profileload.cpp \
     savedialog.cpp \
-    serialmanager1.cpp \
+    serialmanager.cpp \
     txitem.cpp
 
 HEADERS += \
@@ -33,18 +33,18 @@ HEADERS += \
     enuminfo.h \
     eventmanager.h \
     logmanager.h \
-    mainwindow.h    \
+    mainwindowhifu.h \
     mainwindowlifu.h \
     messageinfo.h \
     option.h \
     profileload.h \
     savedialog.h \
-    serialmanager1.h \
+    serialmanager.h \
     txitem.h
 
 FORMS += \
     choosetype.ui \
-    mainwindow.ui \
+    mainwindowhifu.ui \
     mainwindowlifu.ui \
     messageinfo.ui \
     option.ui \

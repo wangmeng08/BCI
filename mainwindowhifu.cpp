@@ -1,5 +1,5 @@
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
+#include "mainwindowhifu.h"
+#include "ui_mainwindowhifu.h"
 #include "datamanager.h"
 #include "logmanager.h"
 #include "messageinfo.h"
@@ -9,9 +9,9 @@
 
 #include <qtabbar.h>
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindowHIFU::MainWindowHIFU(QWidget *parent)
     : BaseWindow(parent)
-    , ui(new Ui::MainWindow)
+    , ui(new Ui::MainWindowHIFU)
 {
     ui->setupUi(this);
     emit writeLog(LogType::INFO, "HIFU start");
@@ -24,22 +24,22 @@ MainWindow::MainWindow(QWidget *parent)
     QTimer::singleShot(5000, [=](){SetConnectState(ConnectState::CONNECT);});
 }
 
-MainWindow::~MainWindow()
+MainWindowHIFU::~MainWindowHIFU()
 {
     delete ui;
 }
 
-QLabel *MainWindow::GetConnectLabel()
+QLabel *MainWindowHIFU::GetConnectLabel()
 {
     return ui->lblState;
 }
 
-QLabel *MainWindow::GetEmitLabel()
+QLabel *MainWindowHIFU::GetEmitLabel()
 {
     return ui->lblEmitState;
 }
 
-void MainWindow::InitData()
+void MainWindowHIFU::InitData()
 {
     ui->tabWidget->tabBar()->hide();
     ui->tabWidget->setCurrentIndex(0);
@@ -61,30 +61,30 @@ void MainWindow::InitData()
     SetEditMode(false);
 }
 
-void MainWindow::InitEvent()
+void MainWindowHIFU::InitEvent()
 {
-    connect(ui->btnAdvance, &QPushButton::clicked, this, &MainWindow::OnClickAdvance);
-    connect(ui->btnEdit, &QPushButton::clicked, this, &MainWindow::OnClickEdit);
-    connect(ui->btnLoad, &QPushButton::clicked, this, &MainWindow::OnClickLoad);
-    connect(ui->btnLocal, &QPushButton::clicked, this, &MainWindow::OnClickLocal);
-    connect(ui->btnOff, &QPushButton::clicked, this, &MainWindow::OnClickOff);
-    connect(ui->btnOn, &QPushButton::clicked, this, &MainWindow::OnClickOn);
-    connect(ui->btnOption, &QPushButton::clicked, this, &MainWindow::OnClickOption);
-    connect(ui->btnSave, &QPushButton::clicked, this, &MainWindow::OnClickSave);
+    connect(ui->btnAdvance, &QPushButton::clicked, this, &MainWindowHIFU::OnClickAdvance);
+    connect(ui->btnEdit, &QPushButton::clicked, this, &MainWindowHIFU::OnClickEdit);
+    connect(ui->btnLoad, &QPushButton::clicked, this, &MainWindowHIFU::OnClickLoad);
+    connect(ui->btnLocal, &QPushButton::clicked, this, &MainWindowHIFU::OnClickLocal);
+    connect(ui->btnOff, &QPushButton::clicked, this, &MainWindowHIFU::OnClickOff);
+    connect(ui->btnOn, &QPushButton::clicked, this, &MainWindowHIFU::OnClickOn);
+    connect(ui->btnOption, &QPushButton::clicked, this, &MainWindowHIFU::OnClickOption);
+    connect(ui->btnSave, &QPushButton::clicked, this, &MainWindowHIFU::OnClickSave);
 
-    connect(m_DataManager, &DataManager::advanceRFModeChange, this, &MainWindow::OnModeAdvanceRFChange);
-    connect(m_DataManager, &DataManager::powerLimitModeChange, this, &MainWindow::OnModePowerLimitChange);
-    connect(m_DataManager, &DataManager::triggerModeChange, this, &MainWindow::OnModeTriggerChange);
+    connect(m_DataManager, &DataManager::advanceRFModeChange, this, &MainWindowHIFU::OnModeAdvanceRFChange);
+    connect(m_DataManager, &DataManager::powerLimitModeChange, this, &MainWindowHIFU::OnModePowerLimitChange);
+    connect(m_DataManager, &DataManager::triggerModeChange, this, &MainWindowHIFU::OnModeTriggerChange);
 }
 
-void MainWindow::OnClickAdvance()
+void MainWindowHIFU::OnClickAdvance()
 {
     ui->tabWidget->setCurrentIndex(1);
     m_IsInAdvance = true;
     SetAdvanceBtnState();
 }
 
-void MainWindow::OnClickCancel()
+void MainWindowHIFU::OnClickCancel()
 {
     ui->lblDC->setText(QString("%1").arg(m_DataManager->m_CurrentProfile->dc));
     ui->lblDepth->setText(QString("%1").arg(m_DataManager->m_CurrentProfile->depth));
@@ -113,13 +113,13 @@ void MainWindow::OnClickCancel()
     SetEditMode(false);
 }
 
-void MainWindow::OnClickEdit()
+void MainWindowHIFU::OnClickEdit()
 {
     m_IsInEdit = true;
     SetEditMode(m_IsInEdit);
 }
 
-void MainWindow::OnClickLoad()
+void MainWindowHIFU::OnClickLoad()
 {
     int loadIndex = -1;
     auto dialog = new ProfileLoad(loadIndex, this);
@@ -134,26 +134,26 @@ void MainWindow::OnClickLoad()
     OnClickCancel();
 }
 
-void MainWindow::OnClickLocal()
+void MainWindowHIFU::OnClickLocal()
 {
     ui->tabWidget->setCurrentIndex(0);
     m_IsInAdvance = false;
     SetAdvanceBtnState();
 }
 
-void MainWindow::OnClickOff()
+void MainWindowHIFU::OnClickOff()
 {
     SetEmitState(EmitState::IDLE);
     UpdateBtnState();
 }
 
-void MainWindow::OnClickOn()
+void MainWindowHIFU::OnClickOn()
 {
     SetEmitState(EmitState::ON);
     UpdateBtnState();
 }
 
-void MainWindow::OnClickOption()
+void MainWindowHIFU::OnClickOption()
 {
     Option *dialog = new Option(this);
     auto size2 = this->size();
@@ -163,7 +163,7 @@ void MainWindow::OnClickOption()
     delete dialog;
 }
 
-void MainWindow::OnClickSave()
+void MainWindowHIFU::OnClickSave()
 {
     int saveType = 0;
     SaveDialog *dialog = new SaveDialog(saveType, this);
@@ -230,11 +230,11 @@ void MainWindow::OnClickSave()
     }
 }
 
-void MainWindow::OnModeAdvanceRFChange()
+void MainWindowHIFU::OnModeAdvanceRFChange()
 {
 }
 
-void MainWindow::OnModePowerLimitChange()
+void MainWindowHIFU::OnModePowerLimitChange()
 {
     ui->lblWarning->setVisible(!m_DataManager->m_IsUsePowerLimit);
     QString qss = "color:red";
@@ -245,18 +245,18 @@ void MainWindow::OnModePowerLimitChange()
     ui->lblIspta->setStyleSheet(qss);
 }
 
-void MainWindow::OnModeTriggerChange()
+void MainWindowHIFU::OnModeTriggerChange()
 {
 
 }
 
-void MainWindow::SetAdvanceBtnState()
+void MainWindowHIFU::SetAdvanceBtnState()
 {
     ui->btnAdvance->setVisible(!m_IsInAdvance);
     ui->btnLocal->setVisible(m_IsInAdvance);
 }
 
-void MainWindow::SetEditMode(bool isEdit)
+void MainWindowHIFU::SetEditMode(bool isEdit)
 {
     m_IsInEdit = isEdit;
     ui->btnSave->setVisible(isEdit);
@@ -281,7 +281,7 @@ void MainWindow::SetEditMode(bool isEdit)
     UpdateBtnState();
 }
 
-void MainWindow::UpdateBtnState()
+void MainWindowHIFU::UpdateBtnState()
 {
     ui->btnAdvance->setVisible(false);
     ui->btnLocal->setVisible(false);

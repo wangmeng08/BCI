@@ -1,6 +1,6 @@
 #include "basewindow.h"
 #include "logmanager.h"
-#include "serialmanager1.h"
+#include "serialmanager.h"
 #include "eventmanager.h"
 
 BaseWindow::BaseWindow(QWidget *parent)

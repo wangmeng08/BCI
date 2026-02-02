@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+#include "mainwindowhifu.h"
 #include "mainwindowlifu.h"
 #include "choosetype.h"
 #include "datamanager.h"
@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     dialog->exec();
     if(selectType == 0){
         DataManager::GetInstance()->SetClinicalMode(ClinicalMode::HIFU);
-        MainWindow w;
+        MainWindowHIFU w;
         w.show();
         return a.exec();
     }

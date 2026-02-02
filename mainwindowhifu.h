@@ -1,5 +1,5 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef MAINWINDOWHIFU_H
+#define MAINWINDOWHIFU_H
 
 #include <QMainWindow>
 #include <QLineEdit>
@@ -7,16 +7,16 @@
 #include "datamanager.h"
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
+namespace Ui { class MainWindowHIFU; }
 QT_END_NAMESPACE
 
-class MainWindow : public BaseWindow
+class MainWindowHIFU : public BaseWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    MainWindowHIFU(QWidget *parent = nullptr);
+    ~MainWindowHIFU();
 
 protected:
     QLabel *GetConnectLabel() override;
@@ -51,6 +51,6 @@ private:
     QVector<QLineEdit *> m_VectorListHCD;
     bool m_IsInAdvance = false;
     bool m_IsInEdit = false;
-    Ui::MainWindow *ui;
+    Ui::MainWindowHIFU *ui;
 };
-#endif // MAINWINDOW_H
+#endif // MAINWINDOWHIFU_H

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>MainWindowHIFU</class>
+ <widget class="QMainWindow" name="MainWindowHIFU">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -99,10 +99,14 @@
        <string notr="true">QLineEdit::disabled {
     background: transparent;
 	border: 0px solid red;
+	color:black;	
+}
+QLineEdit{
+	color:blue;
 }</string>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">

@@ -10,6 +10,18 @@
 #include <QTimer>
 
 #include "enuminfo.h"
+class Protocol
+{
+public:
+    uint16_t header;
+    uint8_t index;
+    uint8_t commandId;
+    uint8_t deviceAddr;
+    uint16_t dataLen;
+    uint8_t* data;
+    uint32_t crc;
+    uint8_t tailer;
+};
 
 class LogManager: public QObject
 {

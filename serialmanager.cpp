@@ -1,4 +1,4 @@
-﻿#include "serialmanager1.h"
+﻿#include "serialmanager.h"
 #include <iostream>
 
 Q_GLOBAL_STATIC(SerialManager, serialManager);
