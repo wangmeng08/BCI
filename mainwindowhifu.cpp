@@ -1,6 +1,7 @@
 #include "mainwindowhifu.h"
 #include "ui_mainwindowhifu.h"
 #include "datamanager.h"
+#include "eventmanager.h"
 #include "logmanager.h"
 #include "messageinfo.h"
 #include "option.h"
@@ -14,7 +15,7 @@ MainWindowHIFU::MainWindowHIFU(QWidget *parent)
     , ui(new Ui::MainWindowHIFU)
 {
     ui->setupUi(this);
-    emit writeLog(LogType::INFO, "HIFU start");
+    emit EventManager::GetInstance()->writeLog(LogType::INFO, "HIFU start");
 
     InitData();
 

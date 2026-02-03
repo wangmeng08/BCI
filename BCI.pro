@@ -9,34 +9,44 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    basedialog.cpp \
     basewindow.cpp \
     choosetype.cpp \
+    constvalue.cpp \
     datamanager.cpp \
     db.cpp \
     eventmanager.cpp \
     logmanager.cpp \
     main.cpp \
+    mainwindow.cpp \
     mainwindowhifu.cpp \
     mainwindowlifu.cpp \
     messageinfo.cpp \
     option.cpp \
+    patientcreate.cpp \
+    patientmanager.cpp \
     profileload.cpp \
     savedialog.cpp \
     serialmanager.cpp \
     txitem.cpp
 
 HEADERS += \
+    basedialog.h \
     basewindow.h \
     choosetype.h \
+    constvalue.h \
     datamanager.h \
     db.h \
     enuminfo.h \
     eventmanager.h \
     logmanager.h \
+    mainwindow.h \
     mainwindowhifu.h \
     mainwindowlifu.h \
     messageinfo.h \
     option.h \
+    patientcreate.h \
+    patientmanager.h \
     profileload.h \
     savedialog.h \
     serialmanager.h \
@@ -44,10 +54,13 @@ HEADERS += \
 
 FORMS += \
     choosetype.ui \
+    mainwindow.ui \
     mainwindowhifu.ui \
     mainwindowlifu.ui \
     messageinfo.ui \
     option.ui \
+    patientcreate.ui \
+    patientmanager.ui \
     profileload.ui \
     savedialog.ui \
     txitem.ui

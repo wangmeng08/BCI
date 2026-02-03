@@ -19,6 +19,25 @@ public:
        }
 };
 
+class Patient{
+public:
+    int index = 0;
+    int animalType = 0;
+    int age = 1;
+    double weight = 0;
+    QString illness = "";
+    QString name = "";
+    QString GetInfo(){
+        QString info = QString(
+            "Patient name: %1, illness: %2, animalType: %3, age: %4, weight: %5, index: %6\n")
+            .arg(name, illness,
+                 QString::number(animalType),
+                 QString::number(age),
+                 QString::number(weight),
+                 QString::number(index));
+        return info;
+    }
+};
 class BaseProfile{
 public:
     int indexId = 0;
@@ -164,6 +183,17 @@ public:
     }
 };
 
+class Report{
+public:
+    int index = 0;
+    int patientIndex = 0;
+    QString fileName = "";
+    QString reportTime = "";
+    QString GetInfo(){
+        return QString("PatientIndex: %1, fileName: %2").arg(patientIndex).arg(fileName);
+    }
+};
+
 class DB : public QObject
 {
     Q_OBJECT
@@ -171,14 +201,22 @@ public:
     explicit DB(QObject *parent = nullptr);
     static DB *GetInstance();
 
+    bool PatientCreate(QSharedPointer<Patient> patient);
+    bool PatientDelete(int indexId);
+
     bool ProfileCreate(QSharedPointer<Profile> profile, bool isDefault = false);
     bool ProfileCreateLIFU(QSharedPointer<ProfileLIFU> profile, bool isDefault = false);
     bool ProfileDelete(int indexId);
     bool ProfileModifyInfo(QSharedPointer<Profile> profile, QSharedPointer<Profile> targetProfile);
     bool ProfileModifyInfoLIFU(QSharedPointer<ProfileLIFU> profile, QSharedPointer<ProfileLIFU> targetProfile);
 
-    QVector<QSharedPointer<Profile>> ProfileGetAllInfo();
-    QVector<QSharedPointer<ProfileLIFU>> ProfileGetAllInfoLIFU();
+    bool ReportCreate(QSharedPointer<Report> report);
+
+    void ReportGetAllInfo(QHash<int, QVector<QSharedPointer<Report>>> &reportList);
+    void PatientGetAllInfo(QVector<QSharedPointer<Patient>> &patientList);
+
+    void ProfileGetAllInfo(QVector<QSharedPointer<Profile>> &profileList);
+    void ProfileGetAllInfoLIFU(QVector<QSharedPointer<ProfileLIFU>> &profileList);
 signals:
 
 private:
@@ -190,6 +228,10 @@ private:
     void CreateTableLIFUProfileValue();
 
     void CreateTableProfile();
+
+    void CreateTablePatient();
+
+    void CreateTableReport();
 
     void InitDataBase();
     void WriteLog(QString info);

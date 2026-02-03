@@ -2,11 +2,11 @@
 #define BASEWINDOW_H
 
 #include <QLabel>
-#include <QMainWindow>
+#include <QWidget>
 #include "enuminfo.h"
 #include "datamanager.h"
 #include "db.h"
-class BaseWindow : public QMainWindow
+class BaseWindow : public QWidget
 {
     Q_OBJECT
 public:
@@ -14,14 +14,12 @@ public:
 
 protected:
     void InitDatabase();
-    void InitLogManager();
     void InitSerialManager();
 
     void SetConnectState(ConnectState state);
     void SetEmitState(EmitState state);
 
     void WriteCommLog(QString info);
-    void WriteDBLog(QString info);
 
     virtual QLabel *GetConnectLabel() = 0;
     virtual QLabel *GetEmitLabel() = 0;
@@ -33,7 +31,6 @@ protected:
     QStringList m_EmitQss = {"color:rgba(128,128,128,128)", "color:rgba(0,255,0,128)", "color:rgba(128,128,128,128)"};
 
     QThread *serialPortThread = nullptr;
-    QThread *logThread = nullptr;
 
     DB *m_DB = nullptr;
 
@@ -45,7 +42,6 @@ signals:
     void heartTimerStop();
     void serialPortClose();
     void serialPortOpen();
-    void writeLog(LogType type, QString info);
 };
 
 #endif // BASEWINDOW_H

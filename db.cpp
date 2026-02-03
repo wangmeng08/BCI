@@ -17,6 +17,8 @@ DB::DB(QObject *parent)
     CreateTableProfile();
     CreateTableLIFUProfile();
     CreateTableLIFUProfileValue();
+    CreateTablePatient();
+    CreateTableReport();
 }
 
 DB *DB::GetInstance()
@@ -111,6 +113,42 @@ void DB::CreateTableProfile()
     }
 }
 
+void DB::CreateTablePatient()
+{
+    QSqlQuery query;
+    QString sql = "CREATE TABLE IF NOT EXISTS patients ("
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    "name TEXT NOT NULL UNIQUE, "
+                    "type INTEGER NOT NULL default 0, "
+                    "illness TEXT NOT NULL, "
+                    "age INTEGER NOT NULL, "
+                    "weight REAL NOT NULL)";
+    bool success = query.exec(sql);
+    if (!success)
+    {
+        std::cout << "CreateTablePatient error1: " << query.lastError().text().toStdString();
+        QString info = QString("create table patient error: %1").arg(query.lastError().text());
+        WriteLog(info);
+    }
+}
+
+void DB::CreateTableReport()
+{
+    QSqlQuery query;
+    QString sql = "CREATE TABLE IF NOT EXISTS reports ("
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    "patient_id INTEGER NOT NULL default 0, "
+                    "path TEXT NOT NULL, "
+                    "report_time TEXT NOT NULL DEFAULT (datetime('now','localtime')))";
+    bool success = query.exec(sql);
+    if (!success)
+    {
+        std::cout << "CreateTableReport error1: " << query.lastError().text().toStdString();
+        QString info = QString("create table reports error: %1").arg(query.lastError().text());
+        WriteLog(info);
+    }
+}
+
 void DB::InitDataBase()
 {
     db = QSqlDatabase::addDatabase("QSQLITE");
@@ -127,6 +165,57 @@ void DB::InitDataBase()
 void DB::WriteLog(QString info)
 {
     emit EventManager::GetInstance()->writeLog(LogType::DB, info);
+}
+
+bool DB::PatientCreate(QSharedPointer<Patient> patient)
+{
+    CreateConnection();
+    QSqlQuery query;
+
+    query.prepare(R"(
+        INSERT INTO patients
+        (name, type, illness, age, weight)
+        VALUES
+        (:name, :type, :illness, :age, :weight)
+    )");
+
+    query.bindValue(":name",        patient->name);
+    query.bindValue(":type",        patient->animalType);
+    query.bindValue(":illness",     patient->illness);
+    query.bindValue(":age",         patient->age);
+    query.bindValue(":weight",      patient->weight);
+
+    bool success = query.exec();
+    QString logInfo = QString("INSERT into patient set %1").arg(patient->GetInfo());
+    WriteLog(logInfo);
+    if (!success)
+    {
+        QString info =  QString("PatientCreate error2: %1").arg(query.lastError().text());
+        WriteLog(info);
+    }
+    else
+    {
+        patient->index = query.lastInsertId().toInt();
+    }
+    db.close();
+    return success;
+}
+
+bool DB::PatientDelete(int indexId)
+{
+    CreateConnection();
+    QSqlQuery query;
+    query.prepare("DELETE FROM patients WHERE id = ?");
+    query.addBindValue(indexId);
+    QString logInfo = QString("delete patient id: %1").arg(indexId);
+    WriteLog(logInfo);
+    bool success = query.exec();
+    if (!success)
+    {
+        QString info =  QString("PatientDelete error2: %1").arg(query.lastError().text());
+        WriteLog(info);
+    }
+    return success;
 }
 
 bool DB::ProfileCreate(QSharedPointer<Profile> profile, bool isDefault)
@@ -368,9 +457,97 @@ bool DB::ProfileModifyInfoLIFU(QSharedPointer<ProfileLIFU> profile, QSharedPoint
     return true;
 }
 
-QVector<QSharedPointer<Profile> > DB::ProfileGetAllInfo()
+bool DB::ReportCreate(QSharedPointer<Report> report)
 {
-    QVector<QSharedPointer<Profile> > profileList;
+    CreateConnection();
+    QSqlQuery query;
+
+    query.prepare(R"(
+        INSERT INTO reports
+        (patient_id, path)
+        VALUES
+        (:patient_id, :path)
+    )");
+
+    query.bindValue(":patient_id",  report->patientIndex);
+    query.bindValue(":path",        report->fileName);
+
+    bool success = query.exec();
+    QString logInfo = QString("INSERT into profiles set %1").arg(report->GetInfo());
+    WriteLog(logInfo);
+    if (!success)
+    {
+        QString info =  QString("PatientCreate error2: %1").arg(query.lastError().text());
+        WriteLog(info);
+    }
+    else
+    {
+        report->index = query.lastInsertId().toInt();
+    }
+    db.close();
+    return success;
+}
+
+void DB::ReportGetAllInfo(QHash<int, QVector<QSharedPointer<Report>>> &reportList)
+{
+    CreateConnection();
+    QSqlQuery query;
+    QString sql = QString("SELECT  * from reports");
+    query.prepare(sql);
+    if (!query.exec())
+    {
+        QString info =  QString("ReportGetAllInfo error: %1").arg(query.lastError().text());
+        WriteLog(info);
+        db.close();
+        return;
+    }
+
+    while (query.next())
+    {
+        QSharedPointer<Report> report = QSharedPointer<Report>::create();
+        report->index = query.value("id").toInt();
+        report->patientIndex = query.value("patient_id").toInt();
+        report->fileName = query.value("path").toString();
+        report->reportTime = query.value("report_time").toString();
+        if(reportList.contains(report->patientIndex) == false)
+        {
+            QVector<QSharedPointer<Report>> vector;
+            reportList[report->patientIndex] = vector;
+        }
+        reportList[report->patientIndex].append(report);
+    }
+    db.close();
+}
+
+void DB::PatientGetAllInfo(QVector<QSharedPointer<Patient>> &patientList)
+{
+    CreateConnection();
+    QSqlQuery query;
+    QString sql = QString("SELECT  * from patients");
+    query.prepare(sql);
+    if (!query.exec())
+    {
+        QString info =  QString("PatientGetAllInfo error: %1").arg(query.lastError().text());
+        WriteLog(info);
+        db.close();
+    }
+
+    while (query.next())
+    {
+        QSharedPointer<Patient> patient = QSharedPointer<Patient>::create();
+        patient->index = query.value("id").toInt();
+        patient->name = query.value("name").toString();
+        patient->animalType = query.value("type").toInt();
+        patient->illness = query.value("illness").toString();
+        patient->age = query.value("age").toInt();
+        patient->weight = query.value("weight").toDouble();
+        patientList.append(patient);
+    }
+    db.close();
+}
+
+void DB::ProfileGetAllInfo(QVector<QSharedPointer<Profile>> &profileList)
+{
     CreateConnection();
     QSqlQuery query;
     QString sql = QString("SELECT  * from profiles");
@@ -380,7 +557,6 @@ QVector<QSharedPointer<Profile> > DB::ProfileGetAllInfo()
         QString info =  QString("ProfileGetAllInfo error: %1").arg(query.lastError().text());
         WriteLog(info);
         db.close();
-        return profileList;
     }
 
     while (query.next())
@@ -415,12 +591,10 @@ QVector<QSharedPointer<Profile> > DB::ProfileGetAllInfo()
         }
     }
     db.close();
-    return profileList;
 }
 
-QVector<QSharedPointer<ProfileLIFU> > DB::ProfileGetAllInfoLIFU()
+void DB::ProfileGetAllInfoLIFU(QVector<QSharedPointer<ProfileLIFU> > &profileList)
 {
-    QVector<QSharedPointer<ProfileLIFU> > profileList;
     CreateConnection();
     QSqlQuery query;
     QString sql = QString("SELECT  * from lifu_profiles");
@@ -430,7 +604,6 @@ QVector<QSharedPointer<ProfileLIFU> > DB::ProfileGetAllInfoLIFU()
         QString info =  QString("ProfileGetAllInfo error: %1").arg(query.lastError().text());
         WriteLog(info);
         db.close();
-        return profileList;
     }
 
     while (query.next())
@@ -476,5 +649,4 @@ QVector<QSharedPointer<ProfileLIFU> > DB::ProfileGetAllInfoLIFU()
         }
     }
     db.close();
-    return profileList;
 }

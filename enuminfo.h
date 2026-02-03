@@ -33,6 +33,12 @@ enum class MessageType{
     QUESTION
 };
 
+enum class Page{
+    PatientManager = 0,
+    HIFU,
+    LIFU
+};
+
 enum class TriggerMode{
     INTER = 0,
     EXTRE,
@@ -40,7 +46,9 @@ enum class TriggerMode{
     EXTHL
 };
 
+
 Q_DECLARE_METATYPE(LogType);
+Q_DECLARE_METATYPE(Page);
 Q_DECLARE_METATYPE(TriggerMode);
 
 #endif // ENUMINFO_H

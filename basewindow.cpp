@@ -4,31 +4,16 @@
 #include "eventmanager.h"
 
 BaseWindow::BaseWindow(QWidget *parent)
-    : QMainWindow{parent}
+    : QWidget{parent}
 {
-    qRegisterMetaType<LogType>("LogType");
-    qRegisterMetaType<TriggerMode>("TriggerMode");
-    InitLogManager();
     InitSerialManager();
     m_DB = DB::GetInstance();
     m_DataManager = DataManager::GetInstance();
-    connect(EventManager::GetInstance(), &EventManager::writeLog, this, &BaseWindow::writeLog);
 }
 
 void BaseWindow::InitDatabase()
 {
 
-}
-
-void BaseWindow::InitLogManager()
-{
-    LogManager *logMgr = LogManager::GetInstance();
-    logThread = new QThread();
-    logMgr->moveToThread(logThread);
-    logMgr->timer->moveToThread(logThread);
-    connect(this, &BaseWindow::writeLog, logMgr, &LogManager::WriteLog);
-    connect(logThread, &QThread::finished, logMgr, &QObject::deleteLater);
-    logThread->start();
 }
 
 void BaseWindow::InitSerialManager()
@@ -70,10 +55,5 @@ void BaseWindow::SetEmitState(EmitState state)
 
 void BaseWindow::WriteCommLog(QString info)
 {
-    emit writeLog(LogType::COMM, info);
-}
-
-void BaseWindow::WriteDBLog(QString info)
-{
-    emit writeLog(LogType::DB, info);
+    emit EventManager::GetInstance()->writeLog(LogType::COMM, info);
 }
