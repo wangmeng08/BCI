@@ -18,6 +18,7 @@ public:
     MainWindowHIFU(QWidget *parent = nullptr);
     ~MainWindowHIFU();
 
+    void InitProfileData() override;
 protected:
     QLabel *GetConnectLabel() override;
     QLabel *GetEmitLabel() override;

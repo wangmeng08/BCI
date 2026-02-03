@@ -1,21 +1,21 @@
-#ifndef MAINWINDOWLIFU_H
-#define MAINWINDOWLIFU_H
+#ifndef MAINWINDOWLIFU4_H
+#define MAINWINDOWLIFU4_H
 #include <QLineEdit>
 #include <QMainWindow>
 #include "basewindow.h"
 #include "txitem.h"
 
 namespace Ui {
-class MainWindowLIFU;
+class MainWindowLIFU4;
 }
 
-class MainWindowLIFU : public BaseWindow
+class MainWindowLIFU4 : public BaseWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindowLIFU(QWidget *parent = nullptr);
-    ~MainWindowLIFU();
+    explicit MainWindowLIFU4(QWidget *parent = nullptr);
+    ~MainWindowLIFU4();
 
     void InitProfileData() override;
 
@@ -41,7 +41,7 @@ private:
 private:
     QVector<TXItem *> m_VectorItem;
     bool m_IsInEdit = false;
-    Ui::MainWindowLIFU *ui;
+    Ui::MainWindowLIFU4 *ui;
 };
 
-#endif // MAINWINDOWLIFU_H
+#endif // MAINWINDOWLIFU4_H

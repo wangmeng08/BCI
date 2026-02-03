@@ -21,6 +21,7 @@ SOURCES += \
     mainwindow.cpp \
     mainwindowhifu.cpp \
     mainwindowlifu.cpp \
+    mainwindowlifu4.cpp \
     messageinfo.cpp \
     option.cpp \
     patientcreate.cpp \
@@ -43,6 +44,7 @@ HEADERS += \
     mainwindow.h \
     mainwindowhifu.h \
     mainwindowlifu.h \
+    mainwindowlifu4.h \
     messageinfo.h \
     option.h \
     patientcreate.h \
@@ -57,6 +59,7 @@ FORMS += \
     mainwindow.ui \
     mainwindowhifu.ui \
     mainwindowlifu.ui \
+    mainwindowlifu4.ui \
     messageinfo.ui \
     option.ui \
     patientcreate.ui \

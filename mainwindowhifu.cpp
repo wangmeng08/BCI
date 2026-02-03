@@ -30,6 +30,11 @@ MainWindowHIFU::~MainWindowHIFU()
     delete ui;
 }
 
+void MainWindowHIFU::InitProfileData()
+{
+    OnClickCancel();
+}
+
 QLabel *MainWindowHIFU::GetConnectLabel()
 {
     return ui->lblState;
@@ -56,7 +61,6 @@ void MainWindowHIFU::InitData()
     m_VectorListHCD.append(ui->lblHCD2);
     m_VectorListHCD.append(ui->lblHCD3);
     m_VectorListHCD.append(ui->lblHCD4);
-    OnClickCancel();
     OnModeAdvanceRFChange();
     OnModePowerLimitChange();
     SetEditMode(false);

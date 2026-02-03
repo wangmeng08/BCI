@@ -183,6 +183,59 @@ public:
     }
 };
 
+class ProfileLIFU4 : public BaseProfile{
+public:
+    double dutyc = 50;
+    static constexpr int ValueCount = 4;
+    std::array<int, ValueCount> values;
+    ProfileLIFU4()
+    {
+        values.fill(0);
+    }
+    ~ProfileLIFU4()
+    {
+
+    }
+
+    void CopyInfo(const ProfileLIFU4* other) {
+        if (!other) return;
+
+        profileName = other->profileName;
+        period = other->period;
+        timer = other->timer;
+        dutyc = other->dutyc;
+        temp = other->temp;
+        voltage = other->voltage;
+
+        for(int i=0; i<ValueCount; i++)
+        {
+            values[i] = other->values[i];
+        }
+    }
+
+    QString GetInfo() const
+    {
+        QString infoStr = QString(
+                    "ProfileName: %1, IndexId: %2, dutyc: %3, Period: %4, timer: %5, "
+                    "temp: %6, voltage: %7\n"
+                ).arg(profileName)
+                 .arg(indexId)
+                 .arg(dutyc)
+                 .arg(period)
+                 .arg(timer)
+                 .arg(temp)
+                 .arg(voltage);
+
+        infoStr += "DetailInfo List: ";
+        for(int i=0; i<ValueCount; i++)
+        {
+            infoStr += QString("%1, ").arg(values[i]);
+        }
+        infoStr + "\n";
+        return infoStr;
+    }
+};
+
 class Report{
 public:
     int index = 0;
@@ -206,9 +259,11 @@ public:
 
     bool ProfileCreate(QSharedPointer<Profile> profile, bool isDefault = false);
     bool ProfileCreateLIFU(QSharedPointer<ProfileLIFU> profile, bool isDefault = false);
+    bool ProfileCreateLIFU4(QSharedPointer<ProfileLIFU4> profile, bool isDefault = false);
     bool ProfileDelete(int indexId);
     bool ProfileModifyInfo(QSharedPointer<Profile> profile, QSharedPointer<Profile> targetProfile);
     bool ProfileModifyInfoLIFU(QSharedPointer<ProfileLIFU> profile, QSharedPointer<ProfileLIFU> targetProfile);
+    bool ProfileModifyInfoLIFU4(QSharedPointer<ProfileLIFU4> profile, QSharedPointer<ProfileLIFU4> targetProfile);
 
     bool ReportCreate(QSharedPointer<Report> report);
 
@@ -217,6 +272,7 @@ public:
 
     void ProfileGetAllInfo(QVector<QSharedPointer<Profile>> &profileList);
     void ProfileGetAllInfoLIFU(QVector<QSharedPointer<ProfileLIFU>> &profileList);
+    void ProfileGetAllInfoLIFU4(QVector<QSharedPointer<ProfileLIFU4>> &profileList);
 signals:
 
 private:
@@ -225,6 +281,7 @@ private:
     bool CreateConnection();
 
     void CreateTableLIFUProfile();
+    void CreateTableLIFUProfile4();
     void CreateTableLIFUProfileValue();
 
     void CreateTableProfile();

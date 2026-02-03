@@ -123,6 +123,8 @@ void PatientManager::OnClickNext()
     if(selectType == 0)
         return;
     Page page = (Page)selectType;
+    ClinicalMode mode = (ClinicalMode)(selectType);
+    dataManager->SetClinicalMode(mode);
     emit EventManager::GetInstance()->turnToPage(page);
 }
 

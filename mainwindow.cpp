@@ -5,6 +5,7 @@
 #include "logmanager.h"
 #include "mainwindowhifu.h"
 #include "mainwindowlifu.h"
+#include "mainwindowlifu4.h"
 #include "patientmanager.h"
 
 #include <QThread>
@@ -23,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     MainWindowHIFU *hifu = new MainWindowHIFU;
     MainWindowLIFU *lifu = new MainWindowLIFU;
+    MainWindowLIFU4 *lifu4 = new MainWindowLIFU4;
     PatientManager *patient = new PatientManager;
     auto addPage = [&](Page page, QWidget* w){
         m_Stack->insertWidget(static_cast<int>(page), w);
@@ -30,9 +32,9 @@ MainWindow::MainWindow(QWidget *parent) :
     addPage(Page::PatientManager, patient);
     addPage(Page::HIFU, hifu);
     addPage(Page::LIFU, lifu);
+    addPage(Page::LIFU4, lifu4);
 
     setCentralWidget(m_Stack);
-    DataManager::GetInstance()->SetClinicalMode(ClinicalMode::HIFU);
     TurnToPage(Page::PatientManager);
     connect(EventManager::GetInstance(), &EventManager::turnToPage, this, &MainWindow::TurnToPage);
 }
@@ -56,4 +58,9 @@ void MainWindow::InitLogManager()
 void MainWindow::TurnToPage(Page page)
 {
     m_Stack->setCurrentIndex((int)page);
+    if(page != Page::PatientManager)
+    {
+        BaseWindow * window = qobject_cast<BaseWindow*>(m_Stack->widget(static_cast<int>(page)));
+        window->InitProfileData();
+    }
 }

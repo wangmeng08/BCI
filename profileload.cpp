@@ -22,13 +22,26 @@ ProfileLoad::ProfileLoad(int &loadIndex, QWidget *parent) :
         }
         ui->cmbProfile->setCurrentIndex(m_CurrentIndex);
     }
-    else if(DataManager::GetInstance()->GetClinicalMode() == ClinicalMode::LIFU)
+    else if(DataManager::GetInstance()->GetClinicalMode() == ClinicalMode::LIFU128)
     {
         for(int i=0; i<DataManager::GetInstance()->m_ProfileListLIFU.size(); i++)
         {
             auto profile = DataManager::GetInstance()->m_ProfileListLIFU[i];
             ui->cmbProfile->addItem(profile->profileName);
             if(profile == DataManager::GetInstance()->m_CurrentProfileLIFU)
+            {
+                m_CurrentIndex = i;
+            }
+        }
+        ui->cmbProfile->setCurrentIndex(m_CurrentIndex);
+    }
+    else if(DataManager::GetInstance()->GetClinicalMode() == ClinicalMode::LIFU4)
+    {
+        for(int i=0; i<DataManager::GetInstance()->m_ProfileListLIFU4.size(); i++)
+        {
+            auto profile = DataManager::GetInstance()->m_ProfileListLIFU4[i];
+            ui->cmbProfile->addItem(profile->profileName);
+            if(profile == DataManager::GetInstance()->m_CurrentProfileLIFU4)
             {
                 m_CurrentIndex = i;
             }

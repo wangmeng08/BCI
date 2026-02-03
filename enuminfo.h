@@ -3,8 +3,9 @@
 #include <QMetaType>
 
 enum class ClinicalMode{
-    HIFU = 0,
-    LIFU
+    HIFU = 1,
+    LIFU128,
+    LIFU4
 };
 
 enum class ConnectState{
@@ -36,7 +37,8 @@ enum class MessageType{
 enum class Page{
     PatientManager = 0,
     HIFU,
-    LIFU
+    LIFU,
+    LIFU4
 };
 
 enum class TriggerMode{

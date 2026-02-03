@@ -112,7 +112,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="btnLIFUC">
+          <widget class="QPushButton" name="btnLIFU4">
            <property name="maximumSize">
             <size>
              <width>160</width>
@@ -125,7 +125,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="btnLIFUPA">
+          <widget class="QPushButton" name="btnLIFU128">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
              <horstretch>0</horstretch>

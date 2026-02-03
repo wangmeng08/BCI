@@ -11,7 +11,7 @@ class BaseWindow : public QWidget
     Q_OBJECT
 public:
     explicit BaseWindow(QWidget *parent = nullptr);
-
+    virtual void InitProfileData() = 0;
 protected:
     void InitDatabase();
     void InitSerialManager();

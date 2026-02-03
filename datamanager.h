@@ -21,22 +21,27 @@ public:
 
     bool IsNameUse(QString profileName, int excepetIndexID = 0);
     bool IsNameUseLIFU(QString profileName, int excepetIndexID = 0);
+    bool IsNameUseLIFU4(QString profileName, int excepetIndexID = 0);
 
     bool IsNameUsePatient(QString name);
 
     bool SaveInfoToCurrentProfile(QSharedPointer<Profile> profile);
     bool SaveInfoToCurrentProfileLIFU(QSharedPointer<ProfileLIFU> profile);
+    bool SaveInfoToCurrentProfileLIFU4(QSharedPointer<ProfileLIFU4> profile);
 
     bool SaveInfoToDefaultProfile(QSharedPointer<Profile> profile);
     bool SaveInfoToDefaultProfileLIFU(QSharedPointer<ProfileLIFU> profile);
+    bool SaveInfoToDefaultProfileLIFU4(QSharedPointer<ProfileLIFU4> profile);
 
     bool SaveInfoToNewProfile(QSharedPointer<Profile> profile);
     bool SaveInfoToNewProfileLIFU(QSharedPointer<ProfileLIFU> profile);
+    bool SaveInfoToNewProfileLIFU4(QSharedPointer<ProfileLIFU4> profile);
 
     void GetAllPatient();
 
     void GetAllProfileInfo();
     void GetAllProfileInfoLIFU();
+    void GetAllProfileInfoLIFU4();
 
     void GetAllReport();
 
@@ -55,9 +60,11 @@ public:
     QVector<QSharedPointer<Patient>> m_PatientList;
     QVector<QSharedPointer<Profile>> m_ProfileList;
     QVector<QSharedPointer<ProfileLIFU>> m_ProfileListLIFU;
+    QVector<QSharedPointer<ProfileLIFU4>> m_ProfileListLIFU4;
     QSharedPointer<Patient> m_CurrentPatient;
     QSharedPointer<Profile> m_CurrentProfile;
     QSharedPointer<ProfileLIFU> m_CurrentProfileLIFU;
+    QSharedPointer<ProfileLIFU4> m_CurrentProfileLIFU4;
 
 
     bool m_IsUsePowerLimit = true;

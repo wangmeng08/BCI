@@ -16,6 +16,7 @@ DB::DB(QObject *parent)
     CreateConnection();
     CreateTableProfile();
     CreateTableLIFUProfile();
+    CreateTableLIFUProfile4();
     CreateTableLIFUProfileValue();
     CreateTablePatient();
     CreateTableReport();
@@ -54,6 +55,30 @@ void DB::CreateTableLIFUProfile()
     {
         std::cout << "CreateTableLIFUProfile error1: " << query.lastError().text().toStdString();
         QString info = QString("create table lifu_profiles error: %1").arg(query.lastError().text());
+        WriteLog(info);
+    }
+}
+
+void DB::CreateTableLIFUProfile4()
+{
+    QSqlQuery query;
+    QString sql = "CREATE TABLE IF NOT EXISTS lifu4_profiles ("
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    "profile_name TEXT NOT NULL UNIQUE, "
+                    "dutyc REAL NOT NULL, "
+                    "period INTEGER NOT NULL, "
+                    "timer INTEGER NOT NULL, "
+                    "temp REAL NOT NULL, "
+                    "voltage REAL NOT NULL, "
+                    "ch01 INTEGER NOT NULL, "
+                    "ch02 INTEGER NOT NULL, "
+                    "ch03 INTEGER NOT NULL, "
+                    "ch04 INTEGER NOT NULL)";
+    bool success = query.exec(sql);
+    if (!success)
+    {
+        std::cout << "CreateTableLIFUProfile error1: " << query.lastError().text().toStdString();
+        QString info = QString("create table lifu4_profiles error: %1").arg(query.lastError().text());
         WriteLog(info);
     }
 }
@@ -296,7 +321,7 @@ bool DB::ProfileCreateLIFU(QSharedPointer<ProfileLIFU> profile, bool isDefault)
     query.bindValue(":voltage",    profile->voltage);
 
     bool success = query.exec();
-    QString logInfo = QString("INSERT into profiles_lifu set %1").arg(profile->GetInfo());
+    QString logInfo = QString("INSERT into lifu_profiles set %1").arg(profile->GetInfo());
     WriteLog(logInfo);
     if (!success)
     {
@@ -324,6 +349,50 @@ bool DB::ProfileCreateLIFU(QSharedPointer<ProfileLIFU> profile, bool isDefault)
     }
     db.close();
     return success;
+}
+
+bool DB::ProfileCreateLIFU4(QSharedPointer<ProfileLIFU4> profile, bool isDefault)
+{
+    CreateConnection();
+    QSqlQuery query;
+
+    query.prepare(R"(
+        INSERT INTO lifu4_profiles
+        (profile_name, dutyc, period, timer, temp, voltage, ch01, ch02, ch03, ch04)
+        VALUES
+        (:profile_name, :dutyc, :period, :timer, :temp, :voltage, :ch01, :ch02, :ch03, :ch04)
+    )");
+
+    query.bindValue(":profile_name", profile->profileName);
+    query.bindValue(":dutyc",      profile->dutyc);
+    query.bindValue(":period",     profile->period);
+    query.bindValue(":timer",      profile->timer);
+    query.bindValue(":temp",       profile->temp);
+    query.bindValue(":voltage",    profile->voltage);
+    query.bindValue(":ch01",       profile->values[0]);
+    query.bindValue(":ch02",       profile->values[1]);
+    query.bindValue(":ch03",       profile->values[2]);
+    query.bindValue(":ch04",       profile->values[3]);
+
+    bool success = query.exec();
+    QString logInfo = QString("INSERT into lifu4_profiles set %1").arg(profile->GetInfo());
+    WriteLog(logInfo);
+    if (!success)
+    {
+        QString info =  QString("ProfileCreateLIFU4 error2: %1").arg(query.lastError().text());
+        WriteLog(info);
+        if(isDefault)
+        {
+
+        }
+    }
+    else
+    {
+        profile->indexId = query.lastInsertId().toInt();
+    }
+    db.close();
+    return success;
+
 }
 
 bool DB::ProfileDelete(int indexId)
@@ -452,6 +521,39 @@ bool DB::ProfileModifyInfoLIFU(QSharedPointer<ProfileLIFU> profile, QSharedPoint
     }
     targetProfile->CopyInfo(profile.data());
     QString logInfo = QString("UPDATE lifu_profiles set %1, where index = %2").arg(targetProfile->GetInfo()).arg(targetProfile->indexId);
+    WriteLog(logInfo);
+    db.close();
+    return true;
+}
+
+bool DB::ProfileModifyInfoLIFU4(QSharedPointer<ProfileLIFU4> profile, QSharedPointer<ProfileLIFU4> targetProfile)
+{
+    CreateConnection();
+    QSqlQuery query(db);
+
+    query.prepare(R"(UPDATE lifu4_profiles SET profile_name = ?, dutyc= ?, period = ?, timer = ?, temp = ?, voltage = ?, ch01 = ?, ch02 = ?, ch03 = ?, ch04 = ? WHERE id = ?)");
+
+    query.addBindValue(profile->profileName);
+    query.addBindValue(profile->dutyc);
+    query.addBindValue(profile->period);
+    query.addBindValue(profile->timer);
+    query.addBindValue(profile->temp);
+    query.addBindValue(profile->voltage);
+    query.addBindValue(profile->values[0]);
+    query.addBindValue(profile->values[1]);
+    query.addBindValue(profile->values[2]);
+    query.addBindValue(profile->values[3]);
+    query.addBindValue(targetProfile->indexId);
+
+    if (!query.exec()) {
+        qWarning() << query.lastError().text();
+        db.rollback();
+        db.close();
+        return false;
+    }
+
+    targetProfile->CopyInfo(profile.data());
+    QString logInfo = QString("UPDATE lifu4_profiles set %1, where index = %2").arg(targetProfile->GetInfo()).arg(targetProfile->indexId);
     WriteLog(logInfo);
     db.close();
     return true;
@@ -644,6 +746,46 @@ void DB::ProfileGetAllInfoLIFU(QVector<QSharedPointer<ProfileLIFU> > &profileLis
     {
         QSharedPointer<ProfileLIFU> profile = QSharedPointer<ProfileLIFU>::create();
         if(ProfileCreateLIFU(profile, true))
+        {
+            profileList.append(profile);
+        }
+    }
+    db.close();
+}
+
+void DB::ProfileGetAllInfoLIFU4(QVector<QSharedPointer<ProfileLIFU4> > &profileList)
+{
+    CreateConnection();
+    QSqlQuery query;
+    QString sql = QString("SELECT  * from lifu4_profiles");
+    query.prepare(sql);
+    if (!query.exec())
+    {
+        QString info =  QString("ProfileGetAllInfoLIFU4 error: %1").arg(query.lastError().text());
+        WriteLog(info);
+        db.close();
+    }
+
+    while (query.next())
+    {
+        QSharedPointer<ProfileLIFU4> profile = QSharedPointer<ProfileLIFU4>::create();
+        profile->indexId = query.value("id").toInt();
+        profile->profileName = query.value("profile_name").toString();
+        profile->dutyc = query.value("dutyc").toDouble();
+        profile->temp = query.value("temp").toDouble();
+        profile->voltage = query.value("voltage").toDouble();
+        profile->period = query.value("period").toInt();
+        profile->timer = query.value("timer").toInt();
+        profile->values[0] = query.value("ch01").toInt();
+        profile->values[1] = query.value("ch02").toInt();
+        profile->values[2] = query.value("ch03").toInt();
+        profile->values[3] = query.value("ch04").toInt();
+        profileList.append(profile);
+    }
+    if(profileList.size() == 0)
+    {
+        QSharedPointer<ProfileLIFU4> profile = QSharedPointer<ProfileLIFU4>::create();
+        if(ProfileCreateLIFU4(profile, true))
         {
             profileList.append(profile);
         }
