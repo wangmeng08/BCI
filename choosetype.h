@@ -18,6 +18,7 @@ public:
 private:
     void OnClickHIFU();
     void OnClickLIFU();
+    void OnClickLIFUC();
     Ui::ChooseType *ui;
     int *m_SelectType;
 };

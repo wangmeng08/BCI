@@ -11,6 +11,7 @@ public:
     explicit EventManager(QObject *parent = nullptr);
     static EventManager* GetInstance();
 signals:
+    void turnToPage(Page page);
     void writeLog(LogType type, QString info);
 };
 

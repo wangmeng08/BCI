@@ -44,7 +44,7 @@
     <widget class="QWidget" name="widget" native="true">
      <property name="minimumSize">
       <size>
-       <width>500</width>
+       <width>600</width>
        <height>300</height>
       </size>
      </property>
@@ -76,7 +76,7 @@
       </item>
       <item>
        <widget class="QWidget" name="widget_2" native="true">
-        <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1">
+        <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,1">
          <property name="spacing">
           <number>0</number>
          </property>
@@ -93,7 +93,7 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QPushButton" name="btnHIFU">
+          <widget class="QPushButton" name="btnPen">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -107,25 +107,25 @@
             </size>
            </property>
            <property name="text">
-            <string>HIFU</string>
+            <string>Pen500</string>
            </property>
           </widget>
          </item>
          <item>
-          <spacer name="horizontalSpacer_3">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
+          <widget class="QPushButton" name="btnLIFUC">
+           <property name="maximumSize">
             <size>
-             <width>40</width>
-             <height>20</height>
+             <width>160</width>
+             <height>60</height>
             </size>
            </property>
-          </spacer>
+           <property name="text">
+            <string>cLIFU4</string>
+           </property>
+          </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="btnLIFU">
+          <widget class="QPushButton" name="btnLIFUPA">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -139,7 +139,7 @@
             </size>
            </property>
            <property name="text">
-            <string>LIFU</string>
+            <string>paLIFU</string>
            </property>
           </widget>
          </item>

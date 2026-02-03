@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-
+#include <QStackedWidget>
 #include "enuminfo.h"
 
 namespace Ui {
@@ -18,13 +18,14 @@ public:
     ~MainWindow();
 private:
     void InitLogManager();
-
+    void TurnToPage(Page page);
     QThread *logThread = nullptr;
 
 signals:
     void writeLog(LogType type, QString info);
 
 private:
+    QStackedWidget *m_Stack;
     Ui::MainWindow *ui;
 };
 

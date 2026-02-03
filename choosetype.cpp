@@ -6,8 +6,9 @@ ChooseType::ChooseType(int &selectType, QWidget *parent) :
     ui(new Ui::ChooseType)
 {
     ui->setupUi(this);
-    connect(ui->btnHIFU, &QPushButton::clicked, this, &ChooseType::OnClickHIFU);
-    connect(ui->btnLIFU, &QPushButton::clicked, this, &ChooseType::OnClickLIFU);
+    connect(ui->btnPen, &QPushButton::clicked, this, &ChooseType::OnClickHIFU);
+    connect(ui->btnLIFUPA, &QPushButton::clicked, this, &ChooseType::OnClickLIFU);
+    connect(ui->btnLIFUC, &QPushButton::clicked, this, &ChooseType::OnClickLIFUC);
     m_SelectType = &selectType;
 }
 
@@ -18,12 +19,18 @@ ChooseType::~ChooseType()
 
 void ChooseType::OnClickHIFU()
 {
-    *m_SelectType = 0;
+    *m_SelectType = 1;
     accept();
 }
 
 void ChooseType::OnClickLIFU()
 {
-    *m_SelectType = 1;
+    *m_SelectType = 2;
+    reject();
+}
+
+void ChooseType::OnClickLIFUC()
+{
+    *m_SelectType = 3;
     reject();
 }

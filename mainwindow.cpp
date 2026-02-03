@@ -6,7 +6,6 @@
 #include "mainwindowhifu.h"
 #include "mainwindowlifu.h"
 #include "patientmanager.h"
-#include "qstackedwidget.h"
 
 #include <QThread>
 
@@ -20,18 +19,22 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<TriggerMode>("TriggerMode");
 
     InitLogManager();
-    QStackedWidget *stack = new QStackedWidget(this);
+    m_Stack = new QStackedWidget(this);
 
     MainWindowHIFU *hifu = new MainWindowHIFU;
     MainWindowLIFU *lifu = new MainWindowLIFU;
     PatientManager *patient = new PatientManager;
-    stack->addWidget(patient);
-    stack->addWidget(hifu); // index 0
-    stack->addWidget(lifu); // index 1
+    auto addPage = [&](Page page, QWidget* w){
+        m_Stack->insertWidget(static_cast<int>(page), w);
+    };
+    addPage(Page::PatientManager, patient);
+    addPage(Page::HIFU, hifu);
+    addPage(Page::LIFU, lifu);
 
-    setCentralWidget(stack);
+    setCentralWidget(m_Stack);
     DataManager::GetInstance()->SetClinicalMode(ClinicalMode::HIFU);
-    stack->setCurrentIndex((int)Page::PatientManager);
+    TurnToPage(Page::PatientManager);
+    connect(EventManager::GetInstance(), &EventManager::turnToPage, this, &MainWindow::TurnToPage);
 }
 
 MainWindow::~MainWindow()
@@ -48,4 +51,9 @@ void MainWindow::InitLogManager()
     connect(logThread, &QThread::finished, logMgr, &QObject::deleteLater);
     logThread->start();
     connect(EventManager::GetInstance(), &EventManager::writeLog, logMgr, &LogManager::WriteLog);
+}
+
+void MainWindow::TurnToPage(Page page)
+{
+    m_Stack->setCurrentIndex((int)page);
 }
