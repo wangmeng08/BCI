@@ -53,6 +53,19 @@ void BaseWindow::SetEmitState(EmitState state)
     label->setStyleSheet(qss);
 }
 
+void BaseWindow::SetLineEditState(QLineEdit *edit, bool enable)
+{
+    edit->setEnabled(enable);
+    SetUnderline(edit, enable);
+}
+
+void BaseWindow::SetUnderline(QLineEdit *edit, bool enable)
+{
+    QFont font = edit->font();
+    font.setUnderline(enable);
+    edit->setFont(font);
+}
+
 void BaseWindow::WriteCommLog(QString info)
 {
     emit EventManager::GetInstance()->writeLog(LogType::COMM, info);

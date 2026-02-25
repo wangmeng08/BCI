@@ -1,15 +1,16 @@
 #include "choosetype.h"
+#include "datamanager.h"
+#include "eventmanager.h"
 #include "ui_choosetype.h"
 
-ChooseType::ChooseType(int &selectType, QWidget *parent) :
-    QDialog(parent),
+ChooseType::ChooseType(QWidget *parent) :
+    QWidget(parent),
     ui(new Ui::ChooseType)
 {
     ui->setupUi(this);
     connect(ui->btnPen, &QPushButton::clicked, this, &ChooseType::OnClickHIFU);
     connect(ui->btnLIFU128, &QPushButton::clicked, this, &ChooseType::OnClickLIFU);
     connect(ui->btnLIFU4, &QPushButton::clicked, this, &ChooseType::OnClickLIFU4);
-    m_SelectType = &selectType;
 }
 
 ChooseType::~ChooseType()
@@ -19,18 +20,22 @@ ChooseType::~ChooseType()
 
 void ChooseType::OnClickHIFU()
 {
-    *m_SelectType = 1;
-    accept();
+    SetPage(Page::HIFU);
 }
 
 void ChooseType::OnClickLIFU()
 {
-    *m_SelectType = 2;
-    reject();
+    SetPage(Page::LIFU);
 }
 
 void ChooseType::OnClickLIFU4()
 {
-    *m_SelectType = 3;
-    reject();
+    SetPage(Page::LIFU4);
+}
+
+void ChooseType::SetPage(Page page)
+{
+    ClinicalMode mode = (ClinicalMode)((int)page + (int)ClinicalMode::HIFU - (int)Page::HIFU);
+    DataManager::GetInstance()->SetClinicalMode(mode);
+    emit EventManager::GetInstance()->turnToPage(page);
 }

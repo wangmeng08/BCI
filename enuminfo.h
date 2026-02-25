@@ -35,7 +35,8 @@ enum class MessageType{
 };
 
 enum class Page{
-    PatientManager = 0,
+    Choose = 0,
+    PatientManager,
     HIFU,
     LIFU,
     LIFU4

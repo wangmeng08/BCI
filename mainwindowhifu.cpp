@@ -18,7 +18,6 @@ MainWindowHIFU::MainWindowHIFU(QWidget *parent)
     emit EventManager::GetInstance()->writeLog(LogType::INFO, "HIFU start");
 
     InitData();
-
     InitEvent();
     SetConnectState(ConnectState::DISCONNECT);
     SetEmitState(EmitState::IDLE);
@@ -265,23 +264,23 @@ void MainWindowHIFU::SetEditMode(bool isEdit)
 {
     m_IsInEdit = isEdit;
     ui->btnSave->setVisible(isEdit);
-    ui->lblDepth->setEnabled(isEdit);
-    ui->lblIsppa->setEnabled(isEdit);
-    ui->lblVoltage->setEnabled(isEdit);
-    ui->lblTimer->setEnabled(isEdit);
-    ui->lblDC->setEnabled(isEdit);
-    ui->lblPeriod->setEnabled(isEdit);
-    ui->lblName->setEnabled(isEdit);
-    ui->lblVoltage2->setEnabled(isEdit);
-    ui->lblTimer2->setEnabled(isEdit);
-    ui->lblPeriod2->setEnabled(isEdit);
-    ui->lblName2->setEnabled(isEdit);
-    ui->lblBurstLen->setEnabled(isEdit);
+    SetLineEditState(ui->lblDepth,isEdit);
+    SetLineEditState(ui->lblIsppa, isEdit);
+    SetLineEditState(ui->lblVoltage, isEdit);
+    SetLineEditState(ui->lblTimer, isEdit);
+    SetLineEditState(ui->lblDC, isEdit);
+    SetLineEditState(ui->lblPeriod, isEdit);
+    SetLineEditState( ui->lblName, isEdit);
+    SetLineEditState(ui->lblVoltage2, isEdit);
+    SetLineEditState(ui->lblTimer2, isEdit);
+    SetLineEditState( ui->lblPeriod2, isEdit);
+    SetLineEditState(ui->lblName2, isEdit);
+    SetLineEditState(ui->lblBurstLen, isEdit);
     for(int i=0; i<4; i++)
     {
-        m_VectorListDelay[i]->setEnabled(isEdit);
-        m_VectorListFreq[i]->setEnabled(isEdit);
-        m_VectorListHCD[i]->setEnabled(isEdit);
+        SetLineEditState(m_VectorListDelay[i], isEdit);
+        SetLineEditState(m_VectorListFreq[i], isEdit);
+        SetLineEditState(m_VectorListHCD[i], isEdit);
     }
     UpdateBtnState();
 }

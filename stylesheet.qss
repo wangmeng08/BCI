@@ -1,0 +1,114 @@
+QWidget {
+  background-color: #1B2251;
+  border: none;
+  color: #f1f1f1;
+}
+
+QToolButton,
+QPushButton {
+  border: 0px solid #3f3f46;
+  font: 36px "Alibaba PuHuiTi 2.0 55 Regular";
+  background-color: #6FD9EC;
+  border-radius: 16px;
+  color: rgb(0,0,0);
+}
+QToolButton:hover,
+QPushButton:hover {
+  background-color: #348CF9;
+}
+
+QToolButton:pressed,
+QPushButton:pressed {
+  background-color: #6FD9EC;
+  border: 0px solid #465686;
+}
+
+QPushButton:checked, QToolButton:checked {
+  border: 0px solid #007acc;
+  background-color: #2458BF;
+}
+
+QPushButton:disabled {
+  background-color: #465686;
+  color: rgba(255, 255, 255, 55);
+}
+
+QLabel {
+  color: white;
+  background-color: transparent;
+  font: 36px "Alibaba PuHuiTi 2.0 55 Regular";
+}
+
+QLabel:disabled {
+  color: #465686;
+  background-color: transparent;
+}
+
+QLineEdit::disabled {
+  background: transparent;
+  border: 0px solid red;
+  color:white;
+}
+QLineEdit{
+  color: #6FD9EC;
+  border: 0px solid #007acc;
+  font: 36px "Alibaba PuHuiTi 2.0 55 Regular";
+}
+
+QTabWidget::pane {
+  border: none;
+}
+
+QComboBox {
+  background-color: #192251;
+  border: 0px solid #465686;
+  border-radius: 8px;
+  selection-background-color: #192251;
+  font: 36px "Alibaba PuHuiTi 2.0 55 Regular";
+  padding-left: 10px;
+  padding-right: 20px;
+  color: white;
+}
+
+QComboBox:disabled{
+  color: rgba(255,255,255,153);
+}
+
+QComboBox::drop-down {
+  border: none;
+  background: transparent;
+  subcontrol-position: right;
+  width: 18px;
+}
+
+QComboBox::drop-down:hover {
+}
+
+QComboBox::down-arrow {
+  image: url(:/images/arrow_down.png);
+  padding-right: 20px;
+}
+
+QComboBox::down-arrow::checked {
+  image: url(:/images/arrow_up.png);
+  padding-right: 20px;
+}
+
+QComboBox:!editable {
+  background-color: #192251;
+}
+
+QComboBox QAbstractItemView{
+  outline: 0px;
+  font: 18px "Alibaba PuHuiTi 2.0 55 Regular";
+  background-color:transparent;
+  selection-background-color: #078AA2;
+  padding-left: 10px;
+}
+
+QComboBox QAbstractItemView::item {
+  min-height: 48px;
+  padding-left: 10px;
+  border: none;
+  background-color: #078AA2;
+}

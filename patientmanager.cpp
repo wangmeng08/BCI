@@ -117,15 +117,7 @@ void PatientManager::OnClickNext()
         return;
     }
     dataManager->m_CurrentPatient = dataManager->m_PatientList[index];
-    int selectType = 0;
-    ChooseType *dialog = new ChooseType(selectType);
-    dialog->exec();
-    if(selectType == 0)
-        return;
-    Page page = (Page)selectType;
-    ClinicalMode mode = (ClinicalMode)(selectType);
-    dataManager->SetClinicalMode(mode);
-    emit EventManager::GetInstance()->turnToPage(page);
+    emit EventManager::GetInstance()->turnToPage(Page::Choose);
 }
 
 void PatientManager::OnClickNew()

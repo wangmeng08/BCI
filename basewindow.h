@@ -2,6 +2,7 @@
 #define BASEWINDOW_H
 
 #include <QLabel>
+#include <QLineEdit>
 #include <QWidget>
 #include "enuminfo.h"
 #include "datamanager.h"
@@ -18,6 +19,8 @@ protected:
 
     void SetConnectState(ConnectState state);
     void SetEmitState(EmitState state);
+    void SetLineEditState(QLineEdit* edit, bool enable);
+    void SetUnderline(QLineEdit* edit, bool enable);
 
     void WriteCommLog(QString info);
 

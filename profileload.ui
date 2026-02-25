@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1001</width>
-    <height>706</height>
+    <width>1073</width>
+    <height>752</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -26,9 +26,12 @@
    <string>Dialog</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">font:15pt;</string>
+   <string notr="true"/>
   </property>
-  <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,1,0" columnstretch="0,0,0,0">
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
    <property name="leftMargin">
     <number>0</number>
    </property>
@@ -41,61 +44,15 @@
    <property name="bottomMargin">
     <number>0</number>
    </property>
-   <property name="spacing">
-    <number>0</number>
-   </property>
-   <item row="0" column="2">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>71</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="1" column="0">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="1" column="1" colspan="2">
-    <widget class="QWidget" name="widget_3" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>720</width>
-       <height>420</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>720</width>
-       <height>480</height>
-      </size>
-     </property>
+   <item>
+    <widget class="QWidget" name="widget" native="true">
      <property name="styleSheet">
-      <string notr="true">#widget_3{
-	background-color: rgb(242, 247, 255);
+      <string notr="true">#widget
+{
+	background-color: rgba(0, 0, 0, 153);
 }</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QGridLayout" name="gridLayout">
       <property name="leftMargin">
        <number>0</number>
       </property>
@@ -108,63 +65,121 @@
       <property name="bottomMargin">
        <number>0</number>
       </property>
-      <item>
-       <widget class="QLabel" name="lblTitle">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <item row="0" column="2">
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>88</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="0">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>84</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="1" colspan="2">
+       <widget class="QWidget" name="widget_3" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="minimumSize">
          <size>
-          <width>0</width>
-          <height>51</height>
+          <width>900</width>
+          <height>570</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>16777215</width>
-          <height>50</height>
+          <width>900</width>
+          <height>570</height>
          </size>
         </property>
         <property name="styleSheet">
-         <string notr="true">background-color: rgb(164, 216, 255);</string>
+         <string notr="true">#widget_3{
+	background-color: #474D78;
+}</string>
         </property>
-        <property name="text">
-         <string>Load</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QWidget" name="widget" native="true">
-        <widget class="QComboBox" name="cmbProfile">
+        <widget class="QLabel" name="lblTitle">
          <property name="geometry">
           <rect>
-           <x>160</x>
-           <y>120</y>
-           <width>391</width>
-           <height>61</height>
+           <x>0</x>
+           <y>0</y>
+           <width>901</width>
+           <height>60</height>
           </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>60</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>60</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: #192251;</string>
+         </property>
+         <property name="text">
+          <string>Load</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
         <widget class="QPushButton" name="btnLoad">
          <property name="geometry">
           <rect>
-           <x>400</x>
-           <y>240</y>
-           <width>150</width>
-           <height>50</height>
+           <x>515</x>
+           <y>456</y>
+           <width>180</width>
+           <height>90</height>
           </rect>
          </property>
          <property name="text">
           <string>Load</string>
          </property>
         </widget>
+        <widget class="QComboBox" name="cmbProfile">
+         <property name="geometry">
+          <rect>
+           <x>220</x>
+           <y>253</y>
+           <width>460</width>
+           <height>64</height>
+          </rect>
+         </property>
+        </widget>
         <widget class="QPushButton" name="btnCancel">
          <property name="geometry">
           <rect>
-           <x>160</x>
-           <y>240</y>
-           <width>150</width>
-           <height>50</height>
+           <x>215</x>
+           <y>456</y>
+           <width>180</width>
+           <height>90</height>
           </rect>
          </property>
          <property name="text">
@@ -173,34 +188,34 @@
         </widget>
        </widget>
       </item>
+      <item row="1" column="3">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>83</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="2" column="1">
+       <spacer name="verticalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>88</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
      </layout>
     </widget>
-   </item>
-   <item row="1" column="3">
-    <spacer name="horizontalSpacer_2">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="2" column="1">
-    <spacer name="verticalSpacer_2">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>71</height>
-      </size>
-     </property>
-    </spacer>
    </item>
   </layout>
  </widget>
