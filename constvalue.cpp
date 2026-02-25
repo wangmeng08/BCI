@@ -7,6 +7,9 @@ ConstValue::ConstValue(QObject *parent)
     AnimalList.append(tr("Rat"));
     AnimalList.append(tr("Rabbit"));
     AnimalList.append(tr("Large Animal"));
+
+    DeleteLimit = 1000;
+    LoadInfo = 9999;
 }
 
 ConstValue *ConstValue::GetInstance()

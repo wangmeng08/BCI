@@ -17,7 +17,12 @@ public:
 
 private:
     void OnClickCancle();
+    void OnClickDelete();
     void OnClickLoad();
+    void OnClickLoadInfo();
+
+    QVector<int> ReadFileToVector(const QString& filePath);
+
     Ui::ProfileLoad *ui;
     int *m_LoadIndex = nullptr;
     int m_CurrentIndex = 0;

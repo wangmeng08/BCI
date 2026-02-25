@@ -1,5 +1,6 @@
 #include "mainwindowhifu.h"
 #include "ui_mainwindowhifu.h"
+#include "constvalue.h"
 #include "datamanager.h"
 #include "eventmanager.h"
 #include "logmanager.h"
@@ -145,8 +146,21 @@ void MainWindowHIFU::OnClickLoad()
     delete dialog;
     if(loadIndex == -1)
         return;
-    m_DataManager->m_CurrentProfile = m_DataManager->m_ProfileList[loadIndex];
-    OnClickCancel();
+    if(loadIndex < ConstValue::GetInstance()->DeleteLimit)
+    {
+        m_DataManager->m_CurrentProfile = m_DataManager->m_ProfileList[loadIndex];
+        OnClickCancel();
+    }
+    else
+    {
+        int index = loadIndex - ConstValue::GetInstance()->DeleteLimit;
+        if(m_DataManager->m_CurrentProfile == m_DataManager->m_ProfileList[index])
+        {
+            m_DataManager->m_CurrentProfile = m_DataManager->m_ProfileList[0];
+            OnClickCancel();
+        }
+        m_DataManager->DeleteProfile(m_DataManager->m_ProfileList[index]);
+    }
 }
 
 void MainWindowHIFU::OnClickLocal()

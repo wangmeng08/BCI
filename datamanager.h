@@ -18,6 +18,9 @@ public:
     bool CreateReport(QSharedPointer<Report> report);
 
     bool DeletePatient(QSharedPointer<Patient> patient);
+    bool DeleteProfile(QSharedPointer<Profile> profile);
+    bool DeleteProfileLIFU(QSharedPointer<ProfileLIFU> profile);
+    bool DeleteProfileLIFU4(QSharedPointer<ProfileLIFU4> profile);
 
     bool IsNameUse(QString profileName, int excepetIndexID = 0);
     bool IsNameUseLIFU(QString profileName, int excepetIndexID = 0);
@@ -68,6 +71,7 @@ public:
     QSharedPointer<ProfileLIFU> m_CurrentProfileLIFU;
     QSharedPointer<ProfileLIFU4> m_CurrentProfileLIFU4;
 
+    QVector<int> m_TempLIFUValue;
 
     bool m_IsUsePowerLimit = true;
     bool m_IsAdvanceRFMode = false;

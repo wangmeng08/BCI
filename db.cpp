@@ -397,7 +397,57 @@ bool DB::ProfileCreateLIFU4(QSharedPointer<ProfileLIFU4> profile, bool isDefault
 
 bool DB::ProfileDelete(int indexId)
 {
-    return true;
+    CreateConnection();
+    QSqlQuery query;
+    query.prepare("DELETE FROM profiles WHERE id = ?");
+    query.addBindValue(indexId);
+    QString logInfo = QString("delete profiles id: %1").arg(indexId);
+    WriteLog(logInfo);
+    bool success = query.exec();
+    if (!success)
+    {
+        QString info =  QString("ProfileDelete error2: %1").arg(query.lastError().text());
+        WriteLog(info);
+    }
+    return success;
+}
+
+bool DB::ProfileDeleteLIFU(int indexId)
+{
+    CreateConnection();
+    QSqlQuery query;
+    query.prepare("DELETE FROM lifu_profiles WHERE id = ?");
+    query.addBindValue(indexId);
+    QString logInfo = QString("delete profiles id: %1").arg(indexId);
+    WriteLog(logInfo);
+    bool success = query.exec();
+    if (!success)
+    {
+        QString info =  QString("ProfileDelete error2: %1").arg(query.lastError().text());
+        WriteLog(info);
+        return success;
+    }
+    query.prepare("DELETE FROM lifu_profile_value WHERE profile_id = ?");
+    query.addBindValue(indexId);
+    query.exec();
+    return success;
+}
+
+bool DB::ProfileDeleteLIFU4(int indexId)
+{
+    CreateConnection();
+    QSqlQuery query;
+    query.prepare("DELETE FROM lifu4_profiles WHERE id = ?");
+    query.addBindValue(indexId);
+    QString logInfo = QString("delete lifu4_profiles id: %1").arg(indexId);
+    WriteLog(logInfo);
+    bool success = query.exec();
+    if (!success)
+    {
+        QString info =  QString("ProfileDeleteLIFU4 error2: %1").arg(query.lastError().text());
+        WriteLog(info);
+    }
+    return success;
 }
 
 bool DB::ProfileModifyInfo(QSharedPointer<Profile> profile, QSharedPointer<Profile> targetProfile)

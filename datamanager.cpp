@@ -77,6 +77,42 @@ bool DataManager::DeletePatient(QSharedPointer<Patient> patient)
     return res;
 }
 
+bool DataManager::DeleteProfile(QSharedPointer<Profile> profile)
+{
+    if(profile->indexId == 1)
+        return false;
+    bool res = DB::GetInstance()->ProfileDelete(profile->indexId);
+    if(res)
+    {
+        m_ProfileList.removeOne(profile);
+    }
+    return res;
+}
+
+bool DataManager::DeleteProfileLIFU(QSharedPointer<ProfileLIFU> profile)
+{
+    if(profile->indexId == 1)
+        return false;
+    bool res = DB::GetInstance()->ProfileDeleteLIFU(profile->indexId);
+    if(res)
+    {
+        m_ProfileListLIFU.removeOne(profile);
+    }
+    return res;
+}
+
+bool DataManager::DeleteProfileLIFU4(QSharedPointer<ProfileLIFU4> profile)
+{
+    if(profile->indexId == 1)
+        return false;
+    bool res = DB::GetInstance()->ProfileDeleteLIFU4(profile->indexId);
+    if(res)
+    {
+        m_ProfileListLIFU4.removeOne(profile);
+    }
+    return res;
+}
+
 bool DataManager::IsNameUse(QString profileName, int excepetIndexID)
 {
     for(const auto &profile : qAsConst(m_ProfileList))

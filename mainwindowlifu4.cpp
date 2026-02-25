@@ -1,4 +1,5 @@
 #include "mainwindowlifu4.h"
+#include "constvalue.h"
 #include "ui_mainwindowlifu.h"
 #include "profileload.h"
 #include "savedialog.h"
@@ -101,8 +102,22 @@ void MainWindowLIFU4::OnClickLoad()
     delete dialog;
     if(loadIndex == -1)
         return;
-    m_DataManager->m_CurrentProfileLIFU4 = m_DataManager->m_ProfileListLIFU4[loadIndex];
-    OnClickCancel();
+
+    if(loadIndex < ConstValue::GetInstance()->DeleteLimit)
+    {
+        m_DataManager->m_CurrentProfileLIFU4 = m_DataManager->m_ProfileListLIFU4[loadIndex];
+        OnClickCancel();
+    }
+    else
+    {
+        int index = loadIndex - ConstValue::GetInstance()->DeleteLimit;
+        if(m_DataManager->m_CurrentProfileLIFU4 == m_DataManager->m_ProfileListLIFU4[index])
+        {
+            m_DataManager->m_CurrentProfileLIFU4 = m_DataManager->m_ProfileListLIFU4[0];
+            OnClickCancel();
+        }
+        m_DataManager->DeleteProfileLIFU4(m_DataManager->m_ProfileListLIFU4[index]);
+    }
 }
 
 void MainWindowLIFU4::OnClickSave()

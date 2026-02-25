@@ -1,4 +1,5 @@
 #include "messageinfo.h"
+#include "constvalue.h"
 #include "ui_messageinfo.h"
 
 MessageInfo::MessageInfo(QWidget *parent) :
@@ -44,9 +45,11 @@ void MessageInfo::ShowWarning(QString info, QString title)
 
 int MessageInfo::ShowMessage(QString info, QString title, MessageType type)
 {
-    MessageInfo *dialog = new MessageInfo();
+    MessageInfo *dialog = new MessageInfo(ConstValue::GetInstance()->m_MainWindow);
     dialog->SetInfo(info, title);
     dialog->SetType(type);
+    dialog->resize(1024, 768);
+    dialog->move(0, 0);
     return dialog->exec();
 }
 

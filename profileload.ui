@@ -150,19 +150,6 @@
           <set>Qt::AlignCenter</set>
          </property>
         </widget>
-        <widget class="QPushButton" name="btnLoad">
-         <property name="geometry">
-          <rect>
-           <x>515</x>
-           <y>456</y>
-           <width>180</width>
-           <height>90</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Load</string>
-         </property>
-        </widget>
         <widget class="QComboBox" name="cmbProfile">
          <property name="geometry">
           <rect>
@@ -173,18 +160,114 @@
           </rect>
          </property>
         </widget>
-        <widget class="QPushButton" name="btnCancel">
+        <widget class="QWidget" name="widget_2" native="true">
          <property name="geometry">
           <rect>
-           <x>215</x>
-           <y>456</y>
-           <width>180</width>
+           <x>0</x>
+           <y>460</y>
+           <width>900</width>
            <height>90</height>
           </rect>
          </property>
-         <property name="text">
-          <string>Cancel</string>
+         <property name="styleSheet">
+          <string notr="true">#widget_2{
+background-color: rgba(255, 255, 255, 0);
+}
+</string>
          </property>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="btnCancel">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>90</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>180</width>
+              <height>90</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Cancel</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnDelete">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>90</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>180</width>
+              <height>90</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Delete</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnLoadFile">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>90</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>180</width>
+              <height>90</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Load File</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnLoad">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>90</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>180</width>
+              <height>90</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Load</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </widget>
       </item>

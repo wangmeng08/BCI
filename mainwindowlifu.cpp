@@ -1,5 +1,6 @@
 #include "mainwindowlifu.h"
 #include "ui_mainwindowlifu.h"
+#include "constvalue.h"
 #include "profileload.h"
 #include "savedialog.h"
 #include <QListWidgetItem>
@@ -101,8 +102,29 @@ void MainWindowLIFU::OnClickLoad()
     delete dialog;
     if(loadIndex == -1)
         return;
-    m_DataManager->m_CurrentProfileLIFU = m_DataManager->m_ProfileListLIFU[loadIndex];
-    OnClickCancel();
+    if(loadIndex < ConstValue::GetInstance()->DeleteLimit)
+    {
+        m_DataManager->m_CurrentProfileLIFU = m_DataManager->m_ProfileListLIFU[loadIndex];
+        OnClickCancel();
+    }
+    else if(loadIndex == ConstValue::GetInstance()->LoadInfo)
+    {
+        OnClickEdit();
+        for(int i=0; i<ProfileLIFU::ValueCount; i++)
+        {
+            m_VectorItem[i]->SetInfo(m_DataManager->m_TempLIFUValue[i]);
+        }
+    }
+    else
+    {
+        int index = loadIndex - ConstValue::GetInstance()->DeleteLimit;
+        if(m_DataManager->m_CurrentProfileLIFU == m_DataManager->m_ProfileListLIFU[index])
+        {
+            m_DataManager->m_CurrentProfileLIFU = m_DataManager->m_ProfileListLIFU[0];
+            OnClickCancel();
+        }
+        m_DataManager->DeleteProfileLIFU(m_DataManager->m_ProfileListLIFU[index]);
+    }
 }
 
 void MainWindowLIFU::OnClickSave()

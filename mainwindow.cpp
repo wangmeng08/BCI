@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "choosetype.h"
+#include "constvalue.h"
 #include "datamanager.h"
 #include "eventmanager.h"
 #include "logmanager.h"
@@ -36,6 +37,8 @@ MainWindow::MainWindow(QWidget *parent) :
     addPage(Page::HIFU, hifu);
     addPage(Page::LIFU, lifu);
     addPage(Page::LIFU4, lifu4);
+
+    ConstValue::GetInstance()->m_MainWindow = this;
 
     setCentralWidget(m_Stack);
     TurnToPage(Page::PatientManager);

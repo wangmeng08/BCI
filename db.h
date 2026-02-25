@@ -261,6 +261,8 @@ public:
     bool ProfileCreateLIFU(QSharedPointer<ProfileLIFU> profile, bool isDefault = false);
     bool ProfileCreateLIFU4(QSharedPointer<ProfileLIFU4> profile, bool isDefault = false);
     bool ProfileDelete(int indexId);
+    bool ProfileDeleteLIFU(int indexId);
+    bool ProfileDeleteLIFU4(int indexId);
     bool ProfileModifyInfo(QSharedPointer<Profile> profile, QSharedPointer<Profile> targetProfile);
     bool ProfileModifyInfoLIFU(QSharedPointer<ProfileLIFU> profile, QSharedPointer<ProfileLIFU> targetProfile);
     bool ProfileModifyInfoLIFU4(QSharedPointer<ProfileLIFU4> profile, QSharedPointer<ProfileLIFU4> targetProfile);
