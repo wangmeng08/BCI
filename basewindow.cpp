@@ -9,6 +9,29 @@ BaseWindow::BaseWindow(QWidget *parent)
     InitSerialManager();
     m_DB = DB::GetInstance();
     m_DataManager = DataManager::GetInstance();
+    m_Timer = new QTimer(this);
+    m_Timer->setInterval(1000);
+    connect(m_Timer, &QTimer::timeout, this, &BaseWindow::EmitTimerJump);
+}
+
+void BaseWindow::EmitTimerJump()
+{
+    m_CurrentTime--;
+    SetTimerInfo();
+}
+
+void BaseWindow::EmitTimerStart()
+{
+    m_CurrentTime = m_DataManager->GetEmitTime();
+    m_Timer->start();
+    SetTimerInfo();
+}
+
+void BaseWindow::EmitTimerStop()
+{
+    m_Timer->stop();
+    m_CurrentTime = m_DataManager->GetEmitTime();
+    SetTimerInfo();
 }
 
 void BaseWindow::InitDatabase()
@@ -30,6 +53,21 @@ void BaseWindow::InitSerialManager()
     connect(this, &BaseWindow::serialPortOpen, serialMer, &SerialManager::SerialPortOpen);
     serialPortThread->start();
     emit serialPortOpen();
+}
+
+
+void BaseWindow::OnClickOff()
+{
+    SetEmitState(EmitState::IDLE);
+    UpdateBtnState();
+    EmitTimerStop();
+}
+
+void BaseWindow::OnClickOn()
+{
+    SetEmitState(EmitState::ON);
+    UpdateBtnState();
+    EmitTimerStart();
 }
 
 void BaseWindow::SetConnectState(ConnectState state)

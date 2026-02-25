@@ -294,6 +294,23 @@ bool DataManager::SaveInfoToNewProfileLIFU4(QSharedPointer<ProfileLIFU4> profile
     return res;
 }
 
+int DataManager::GetEmitTime()
+{
+    if(m_ClinicalMode == ClinicalMode::HIFU)
+    {
+        return m_CurrentProfile->timer;
+    }
+    else if(m_ClinicalMode == ClinicalMode::LIFU128)
+    {
+        return m_CurrentProfileLIFU->timer;
+    }
+    else if(m_ClinicalMode == ClinicalMode::LIFU4)
+    {
+        return m_CurrentProfileLIFU4->timer;
+    }
+    return 0;
+}
+
 void DataManager::GetAllPatient()
 {
     DB::GetInstance()->PatientGetAllInfo(m_PatientList);

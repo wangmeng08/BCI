@@ -33,6 +33,11 @@ QLabel *MainWindowLIFU4::GetEmitLabel()
     return ui->lblEmitState;
 }
 
+void MainWindowLIFU4::SetTimerInfo()
+{
+    ui->lblTimer->setText(QString("%1").arg(m_CurrentTime));
+}
+
 void MainWindowLIFU4::InitData()
 {
 
@@ -93,18 +98,6 @@ void MainWindowLIFU4::OnClickLoad()
         return;
     m_DataManager->m_CurrentProfileLIFU4 = m_DataManager->m_ProfileListLIFU4[loadIndex];
     OnClickCancel();
-}
-
-void MainWindowLIFU4::OnClickOff()
-{
-    SetEmitState(EmitState::IDLE);
-    UpdateBtnState();
-}
-
-void MainWindowLIFU4::OnClickOn()
-{
-    SetEmitState(EmitState::ON);
-    UpdateBtnState();
 }
 
 void MainWindowLIFU4::OnClickSave()

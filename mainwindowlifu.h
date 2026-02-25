@@ -22,6 +22,7 @@ public:
 protected:
     QLabel *GetConnectLabel() override;
     QLabel *GetEmitLabel() override;
+    void SetTimerInfo() override;
 
 private:
     void InitData();
@@ -30,13 +31,11 @@ private:
     void OnClickCancel();
     void OnClickEdit();
     void OnClickLoad();
-    void OnClickOff();
-    void OnClickOn();
     void OnClickSave();
 
     void SetEditMode(bool isEdit);
 
-    void UpdateBtnState();
+    void UpdateBtnState() override;
 
 private:
     QVector<TXItem *> m_VectorItem;

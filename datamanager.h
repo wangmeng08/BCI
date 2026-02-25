@@ -37,6 +37,8 @@ public:
     bool SaveInfoToNewProfileLIFU(QSharedPointer<ProfileLIFU> profile);
     bool SaveInfoToNewProfileLIFU4(QSharedPointer<ProfileLIFU4> profile);
 
+    int GetEmitTime();
+
     void GetAllPatient();
 
     void GetAllProfileInfo();

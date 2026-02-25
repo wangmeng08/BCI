@@ -22,6 +22,7 @@ public:
 protected:
     QLabel *GetConnectLabel() override;
     QLabel *GetEmitLabel() override;
+    void SetTimerInfo() override;
 
 private:
     void InitData();
@@ -32,8 +33,6 @@ private:
     void OnClickEdit();
     void OnClickLoad();
     void OnClickLocal();
-    void OnClickOff();
-    void OnClickOn();
     void OnClickOption();
     void OnClickSave();
 
@@ -44,7 +43,7 @@ private:
     void SetAdvanceBtnState();
     void SetEditMode(bool isEdit);
 
-    void UpdateBtnState();
+    void UpdateBtnState() override;
 
 private:
     QVector<QLineEdit *> m_VectorListDelay;

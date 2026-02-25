@@ -44,6 +44,12 @@ QLabel *MainWindowHIFU::GetEmitLabel()
     return ui->lblEmitState;
 }
 
+void MainWindowHIFU::SetTimerInfo()
+{
+    ui->lblTimer->setText(QString("%1").arg(m_CurrentTime));
+    ui->lblTimer2->setText(QString("%1").arg(m_CurrentTime));
+}
+
 void MainWindowHIFU::InitData()
 {
     ui->tabWidget->tabBar()->hide();
@@ -143,18 +149,6 @@ void MainWindowHIFU::OnClickLocal()
     ui->tabWidget->setCurrentIndex(0);
     m_IsInAdvance = false;
     SetAdvanceBtnState();
-}
-
-void MainWindowHIFU::OnClickOff()
-{
-    SetEmitState(EmitState::IDLE);
-    UpdateBtnState();
-}
-
-void MainWindowHIFU::OnClickOn()
-{
-    SetEmitState(EmitState::ON);
-    UpdateBtnState();
 }
 
 void MainWindowHIFU::OnClickOption()
