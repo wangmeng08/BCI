@@ -34,12 +34,14 @@ protected:
 
     virtual QLabel *GetConnectLabel() = 0;
     virtual QLabel *GetEmitLabel() = 0;
+    virtual QLabel *GetStateIcon() = 0;
     virtual void SetTimerInfo() = 0;
     virtual void UpdateBtnState() = 0;
 
     int m_CurrentTime = 0;
 
     QStringList m_ConnectDesList = {tr("disconnected"), tr("connected")};
+    QStringList m_ConnectIconQss = {"border-radius: 15px; background-color:#C0CBDF;", "border-radius: 15px; background-color:#44C063;"};
     QStringList m_ConnectQss = {"color:rgba(128,128,128,128)", "color:rgba(0,255,0,128)"};
 
     QStringList m_EmitDesList = {tr("Idle"), tr("On"), tr("Error")};

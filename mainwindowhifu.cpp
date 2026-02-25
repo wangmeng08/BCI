@@ -44,6 +44,11 @@ QLabel *MainWindowHIFU::GetEmitLabel()
     return ui->lblEmitState;
 }
 
+QLabel *MainWindowHIFU::GetStateIcon()
+{
+    return ui->lblStateIcon;
+}
+
 void MainWindowHIFU::SetTimerInfo()
 {
     ui->lblTimer->setText(QString("%1").arg(m_CurrentTime));

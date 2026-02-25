@@ -1,12 +1,12 @@
 #include "mainwindowlifu4.h"
-#include "ui_mainwindowlifu4.h"
+#include "ui_mainwindowlifu.h"
 #include "profileload.h"
 #include "savedialog.h"
 #include <QListWidgetItem>
 
 MainWindowLIFU4::MainWindowLIFU4(QWidget *parent) :
     BaseWindow(parent),
-    ui(new Ui::MainWindowLIFU4)
+    ui(new Ui::MainWindowLIFU)
 {
     ui->setupUi(this);
     InitData();
@@ -31,6 +31,11 @@ QLabel *MainWindowLIFU4::GetConnectLabel()
 QLabel *MainWindowLIFU4::GetEmitLabel()
 {
     return ui->lblEmitState;
+}
+
+QLabel *MainWindowLIFU4::GetStateIcon()
+{
+    return ui->lblStateIcon;
 }
 
 void MainWindowLIFU4::SetTimerInfo()

@@ -14,9 +14,24 @@
    <string>MainWindow</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">font:20px;</string>
+   <string notr="true"/>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <widget class="QWidget" name="widget" native="true">
      <property name="styleSheet">
@@ -30,13 +45,13 @@
        <number>12</number>
       </property>
       <property name="leftMargin">
-       <number>12</number>
+       <number>0</number>
       </property>
       <property name="topMargin">
-       <number>12</number>
+       <number>0</number>
       </property>
       <property name="rightMargin">
-       <number>12</number>
+       <number>0</number>
       </property>
       <property name="bottomMargin">
        <number>12</number>
@@ -46,31 +61,53 @@
         <property name="minimumSize">
          <size>
           <width>50</width>
-          <height>40</height>
+          <height>64</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>50000</width>
-          <height>40</height>
+          <height>64</height>
          </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(77, 86, 127);</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_39">
          <property name="spacing">
-          <number>12</number>
+          <number>19</number>
          </property>
          <property name="leftMargin">
-          <number>24</number>
+          <number>44</number>
          </property>
          <property name="topMargin">
           <number>0</number>
          </property>
          <property name="rightMargin">
-          <number>24</number>
+          <number>67</number>
          </property>
          <property name="bottomMargin">
           <number>0</number>
          </property>
+         <item>
+          <widget class="QLabel" name="lblStateIcon">
+           <property name="minimumSize">
+            <size>
+             <width>30</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>30</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
          <item>
           <widget class="QLabel" name="lblState">
            <property name="text">
@@ -347,13 +384,13 @@
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>50</height>
+          <height>130</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>80</height>
+          <height>130</height>
          </size>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -370,7 +407,7 @@
           <number>24</number>
          </property>
          <property name="bottomMargin">
-          <number>0</number>
+          <number>40</number>
          </property>
          <item>
           <widget class="QPushButton" name="btnLoad">
@@ -383,7 +420,7 @@
            <property name="maximumSize">
             <size>
              <width>240</width>
-             <height>80</height>
+             <height>90</height>
             </size>
            </property>
            <property name="text">
@@ -402,7 +439,7 @@
            <property name="maximumSize">
             <size>
              <width>240</width>
-             <height>80</height>
+             <height>90</height>
             </size>
            </property>
            <property name="text">
@@ -421,7 +458,7 @@
            <property name="maximumSize">
             <size>
              <width>240</width>
-             <height>80</height>
+             <height>90</height>
             </size>
            </property>
            <property name="text">
@@ -440,7 +477,7 @@
            <property name="maximumSize">
             <size>
              <width>240</width>
-             <height>80</height>
+             <height>90</height>
             </size>
            </property>
            <property name="text">
@@ -459,7 +496,7 @@
            <property name="maximumSize">
             <size>
              <width>240</width>
-             <height>80</height>
+             <height>90</height>
             </size>
            </property>
            <property name="text">

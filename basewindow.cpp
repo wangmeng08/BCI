@@ -78,6 +78,8 @@ void BaseWindow::SetConnectState(ConnectState state)
     auto label = GetConnectLabel();
     label->setText(info);
     label->setStyleSheet(qss);
+    auto stateIcon = GetStateIcon();
+    stateIcon->setStyleSheet(m_ConnectIconQss[index]);
 }
 
 void BaseWindow::SetEmitState(EmitState state)

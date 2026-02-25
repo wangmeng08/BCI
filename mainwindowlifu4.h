@@ -6,7 +6,7 @@
 #include "txitem.h"
 
 namespace Ui {
-class MainWindowLIFU4;
+class MainWindowLIFU;
 }
 
 class MainWindowLIFU4 : public BaseWindow
@@ -22,6 +22,7 @@ public:
 protected:
     QLabel *GetConnectLabel() override;
     QLabel *GetEmitLabel() override;
+    QLabel *GetStateIcon() override;
     void SetTimerInfo() override;
 
 private:
@@ -40,7 +41,7 @@ private:
 private:
     QVector<TXItem *> m_VectorItem;
     bool m_IsInEdit = false;
-    Ui::MainWindowLIFU4 *ui;
+    Ui::MainWindowLIFU *ui;
 };
 
 #endif // MAINWINDOWLIFU4_H

@@ -22,6 +22,7 @@ public:
 protected:
     QLabel *GetConnectLabel() override;
     QLabel *GetEmitLabel() override;
+    QLabel *GetStateIcon() override;
     void SetTimerInfo() override;
 
 private:
