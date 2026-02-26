@@ -80,6 +80,7 @@ void MainWindowHIFU::InitData()
 void MainWindowHIFU::InitEvent()
 {
     connect(ui->btnAdvance, &QPushButton::clicked, this, &MainWindowHIFU::OnClickAdvance);
+    connect(ui->btnCancel, &QPushButton::clicked, this, &MainWindowHIFU::OnClickCancel);
     connect(ui->btnEdit, &QPushButton::clicked, this, &MainWindowHIFU::OnClickEdit);
     connect(ui->btnLoad, &QPushButton::clicked, this, &MainWindowHIFU::OnClickLoad);
     connect(ui->btnLocal, &QPushButton::clicked, this, &MainWindowHIFU::OnClickLocal);
@@ -236,6 +237,7 @@ void MainWindowHIFU::OnClickSave()
         }
         break;
     case(3):
+        res = false;
         break;
     default:
         break;
@@ -308,9 +310,11 @@ void MainWindowHIFU::UpdateBtnState()
     ui->btnOff->setVisible(false);
     ui->btnOption->setVisible(false);
     ui->btnSave->setVisible(false);
+    ui->btnCancel->setVisible(false);
     if(m_IsInEdit)
     {
         ui->btnSave->setVisible(true);
+        ui->btnCancel->setVisible(true);
     }
     else
     {

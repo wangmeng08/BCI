@@ -64,6 +64,7 @@ void MainWindowLIFU4::InitData()
 
 void MainWindowLIFU4::InitEvent()
 {
+    connect(ui->btnCancel, &QPushButton::clicked, this, &MainWindowLIFU4::OnClickCancel);
     connect(ui->btnEdit, &QPushButton::clicked, this, &MainWindowLIFU4::OnClickEdit);
     connect(ui->btnLoad, &QPushButton::clicked, this, &MainWindowLIFU4::OnClickLoad);
     connect(ui->btnOff, &QPushButton::clicked, this, &MainWindowLIFU4::OnClickOff);
@@ -157,6 +158,7 @@ void MainWindowLIFU4::OnClickSave()
         }
         break;
     case(3):
+        res = false;
         break;
     default:
         break;
@@ -191,9 +193,11 @@ void MainWindowLIFU4::UpdateBtnState()
     ui->btnOn->setVisible(false);
     ui->btnOff->setVisible(false);
     ui->btnSave->setVisible(false);
+    ui->btnCancel->setVisible(false);
     if(m_IsInEdit)
     {
         ui->btnSave->setVisible(true);
+        ui->btnCancel->setVisible(true);
     }
     else
     {
