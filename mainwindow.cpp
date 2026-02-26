@@ -25,18 +25,12 @@ MainWindow::MainWindow(QWidget *parent) :
     InitLogManager();
     m_Stack = new QStackedWidget(this);
     ChooseType *choose = new ChooseType;
-    MainWindowHIFU *hifu = new MainWindowHIFU;
-    MainWindowLIFU *lifu = new MainWindowLIFU;
-    MainWindowLIFU4 *lifu4 = new MainWindowLIFU4;
     PatientManager *patient = new PatientManager;
     auto addPage = [&](Page page, QWidget* w){
         m_Stack->insertWidget(static_cast<int>(page), w);
     };
     addPage(Page::Choose, choose);
     addPage(Page::PatientManager, patient);
-    addPage(Page::HIFU, hifu);
-    addPage(Page::LIFU, lifu);
-    addPage(Page::LIFU4, lifu4);
 
     ConstValue::GetInstance()->m_MainWindow = this;
 
@@ -63,10 +57,21 @@ void MainWindow::InitLogManager()
 
 void MainWindow::TurnToPage(Page page)
 {
-    m_Stack->setCurrentIndex((int)page);
-    if(page != Page::PatientManager && page != Page::Choose)
+    if(page == Page::PatientManager || page == Page::Choose)
     {
-        BaseWindow * window = qobject_cast<BaseWindow*>(m_Stack->widget(static_cast<int>(page)));
+        m_Stack->setCurrentIndex((int)page);
+    }
+    else{
+        BaseWindow *window = nullptr;
+
+        if(page == Page::HIFU)
+            window = new MainWindowHIFU;
+        else if(page == Page::LIFU)
+            window = new MainWindowLIFU;
+        else
+            window = new MainWindowLIFU4;
+        m_Stack->addWidget(window);
+        m_Stack->setCurrentWidget(window);
         window->InitProfileData();
     }
 }

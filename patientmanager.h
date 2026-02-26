@@ -1,6 +1,7 @@
 #ifndef PATIENTMANAGER_H
 #define PATIENTMANAGER_H
 
+#include <QTableWidgetItem>
 #include <QWidget>
 
 #include "datamanager.h"
@@ -30,6 +31,8 @@ private:
     void OnClickNew();
 
     void OnDeletePatient(QSharedPointer<Patient> patient);
+
+    void OnTableItemClick(QTableWidgetItem *item);
 private:
     DataManager *dataManager;
     Ui::PatientManager *ui;

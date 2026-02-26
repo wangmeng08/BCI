@@ -144,7 +144,7 @@
           <string notr="true">background-color: #192251;</string>
          </property>
          <property name="text">
-          <string>Load</string>
+          <string>Profile</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

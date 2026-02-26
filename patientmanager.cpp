@@ -4,6 +4,7 @@
 #include "messageinfo.h"
 #include "patientcreate.h"
 #include "patientmanager.h"
+#include "reportitem.h"
 #include "ui_patientmanager.h"
 
 #include <QAbstractItemView>
@@ -36,6 +37,8 @@ void PatientManager::InitEvent()
 {
     connect(ui->btnNext, &QPushButton::clicked, this, &PatientManager::OnClickNext);
     connect(ui->btnNew, &QPushButton::clicked, this, &PatientManager::OnClickNew);
+
+    connect(ui->tableInfo, &QTableWidget::itemClicked, this, &PatientManager::OnTableItemClick);
 }
 
 void PatientManager::InitTable()
@@ -96,7 +99,8 @@ void PatientManager::InsertPatientInfo(int row, QSharedPointer<Patient> patient)
         ui->tableInfo->setItem(row, i, item);
     }
     QPushButton *btn = new QPushButton("Delete");
-    btn->setFixedSize(120, 48);
+    btn->setFixedSize(80, 40);
+    btn->setStyleSheet("font: 20px;");
     connect(btn, &QPushButton::clicked, this, [=](){
         OnDeletePatient(patient);
     });
@@ -153,4 +157,23 @@ void PatientManager::OnDeletePatient(QSharedPointer<Patient> patient)
         }
     }
 
+}
+
+void PatientManager::OnTableItemClick(QTableWidgetItem *item)
+{
+    ui->listReport->clear();
+    int row = item->row();
+    int patientIndex = ui->tableInfo->item(row, 0)->text().toInt();
+    if(!dataManager->m_Report.contains(patientIndex))
+        return;
+    auto report = dataManager->m_Report[patientIndex];
+    for(int i=0; i<report.size(); i++)
+    {
+        ReportItem *widget = new ReportItem(this);
+        widget->SetInfo(report[i]->fileName, report[i]->reportTime);
+        QListWidgetItem *item = new QListWidgetItem(ui->listReport);
+        ui->listReport->setItemWidget(item, widget);
+        ui->listReport->addItem(item);
+        item->setSizeHint(QSize(0, 150));
+    }
 }

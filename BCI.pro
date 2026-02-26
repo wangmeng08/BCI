@@ -1,4 +1,4 @@
-QT       += core gui serialport sql
+QT       += core gui serialport sql charts
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -27,6 +27,7 @@ SOURCES += \
     patientcreate.cpp \
     patientmanager.cpp \
     profileload.cpp \
+    reportitem.cpp \
     savedialog.cpp \
     serialmanager.cpp \
     txitem.cpp
@@ -50,6 +51,7 @@ HEADERS += \
     patientcreate.h \
     patientmanager.h \
     profileload.h \
+    reportitem.h \
     savedialog.h \
     serialmanager.h \
     txitem.h
@@ -65,6 +67,7 @@ FORMS += \
     patientcreate.ui \
     patientmanager.ui \
     profileload.ui \
+    reportitem.ui \
     savedialog.ui \
     txitem.ui
 

@@ -12,6 +12,8 @@ MainWindowLIFU4::MainWindowLIFU4(QWidget *parent) :
     ui->setupUi(this);
     InitData();
     InitEvent();
+    SetConnectState(ConnectState::DISCONNECT);
+    SetEmitState(EmitState::IDLE);
 }
 
 MainWindowLIFU4::~MainWindowLIFU4()
