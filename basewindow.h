@@ -39,6 +39,7 @@ protected:
     virtual void UpdateBtnState() = 0;
 
     int m_CurrentTime = 0;
+    const int m_timerIntervalMs = 50;
 
     QStringList m_ConnectDesList = {tr("disconnected"), tr("connected")};
     QStringList m_ConnectIconQss = {"border-radius: 15px; background-color:#C0CBDF;", "border-radius: 15px; background-color:#44C063;"};

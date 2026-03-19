@@ -10,13 +10,18 @@ BaseWindow::BaseWindow(QWidget *parent)
     m_DB = DB::GetInstance();
     m_DataManager = DataManager::GetInstance();
     m_Timer = new QTimer(this);
-    m_Timer->setInterval(1000);
+    m_Timer->setInterval(m_timerIntervalMs);
     connect(m_Timer, &QTimer::timeout, this, &BaseWindow::EmitTimerJump);
 }
 
 void BaseWindow::EmitTimerJump()
 {
-    m_CurrentTime--;
+    m_CurrentTime = m_CurrentTime - m_timerIntervalMs;
+    if(m_CurrentTime <= 0)
+    {
+        OnClickOff();
+        m_CurrentTime = 0;
+    }
     SetTimerInfo();
 }
 
@@ -30,8 +35,6 @@ void BaseWindow::EmitTimerStart()
 void BaseWindow::EmitTimerStop()
 {
     m_Timer->stop();
-    m_CurrentTime = m_DataManager->GetEmitTime();
-    SetTimerInfo();
 }
 
 void BaseWindow::InitDatabase()
