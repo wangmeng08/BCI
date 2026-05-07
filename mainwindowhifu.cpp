@@ -22,7 +22,7 @@ MainWindowHIFU::MainWindowHIFU(QWidget *parent)
     InitEvent();
     SetConnectState(ConnectState::DISCONNECT);
     SetEmitState(EmitState::IDLE);
-    //QTimer::singleShot(5000, [=](){SetConnectState(ConnectState::CONNECT);});
+    QTimer::singleShot(5000, [=](){SetConnectState(ConnectState::CONNECT);});
 }
 
 MainWindowHIFU::~MainWindowHIFU()
@@ -126,7 +126,6 @@ void MainWindowHIFU::OnClickCancel()
         m_VectorListFreq[i]->setText(QString("%1").arg(m_DataManager->m_CurrentProfile->infoList[i]->freq));
         m_VectorListHCD[i]->setText(QString("%1").arg(m_DataManager->m_CurrentProfile->infoList[i]->hcd));
     }
-    m_IsInEdit = false;
     SetEditMode(false);
 }
 

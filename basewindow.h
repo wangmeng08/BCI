@@ -15,6 +15,8 @@ public:
     explicit BaseWindow(QWidget *parent = nullptr);
     virtual void InitProfileData() = 0;
 protected:
+    uint8_t GetDeviceAddr();
+
     void EmitTimerJump();
     void EmitTimerStart();
     void EmitTimerStop();
@@ -24,6 +26,23 @@ protected:
 
     void OnClickOff();
     void OnClickOn();
+
+    void SendCommandData4(uint8_t commandId, uint32_t value);
+    void SendCommandSetEmitTime(uint32_t value);
+    void SendCommandSetFrequency(uint32_t value);
+    void SendCommandSetHvout(uint32_t value);
+    void SendCommandSetPD(uint32_t value);
+    void SendCommandSetPri(uint32_t value);
+
+    void SendCommandSetChannelDelay(const QVector<uint32_t>& delays);
+
+    void SendCommandSystemEmit();
+    void SendCommandSystemEmitReady();
+    void SendCommandSystemHostConnectStatus(HostControlMode mode);
+    void SendCommandSystemHostCheckStatus();
+    void SendCommandSystemHostCheckSN();
+    void SendCommandSystemLIFUModel();
+    void SendCommandSystemTriggerModel();
 
     void SetConnectState(ConnectState state);
     void SetEmitState(EmitState state);
@@ -37,6 +56,8 @@ protected:
     virtual QLabel *GetStateIcon() = 0;
     virtual void SetTimerInfo() = 0;
     virtual void UpdateBtnState() = 0;
+
+    QByteArray FromUint32(uint32_t value);
 
     int m_CurrentTime = 0;
     const int m_timerIntervalMs = 50;
@@ -59,6 +80,9 @@ protected:
 signals:
     void heartTimerStart();
     void heartTimerStop();
+
+    void send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data);
+
     void serialPortClose();
     void serialPortOpen();
 };

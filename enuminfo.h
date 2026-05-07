@@ -19,6 +19,11 @@ enum class EmitState{
     ERROR
 };
 
+enum class HostControlMode{
+    LOCAL = 0,
+    REMOTE
+};
+
 enum class LogType
 {
     INFO = 0,

@@ -21,8 +21,8 @@ public:
 public:
 	SerialManager();
     ~SerialManager();
-    QSerialPort *mSerialPort;
-    QTimer *heartTimer;
+    QSerialPort *m_SerialPort = nullptr;
+    QTimer *heartTimer = nullptr;
 
 
 public slots:
@@ -32,14 +32,25 @@ public slots:
     void SerialPortOpen();
 
 private:
+    uint8_t m_Index = 0;
+    QByteArray m_Buffer;
     QList<QByteArray> serialDataList;
-    void InitSerialPort();
 
+    bool ParseSerialData(QByteArray& packet);
+
+    void InitSerialPort();
+    void Send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data);
+    void WriteQByteArrayLog(QByteArray data, bool isReceiveInfo = false);
+
+    QByteArray PackPacket(uint8_t cmd, uint8_t addr, uint16_t len, const QByteArray& data);
+
+    uint32_t Crc32(const QByteArray& data);
 protected Q_SLOTS:
     void OnHeartTimeBeat();
     void OnSerialDataRead();
 
 Q_SIGNALS:
+    void readSerialData(QByteArray data);
 	void writeLog(QString info);
 
 public slots:

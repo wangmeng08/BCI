@@ -86,6 +86,9 @@ void MainWindowLIFU::OnClickCancel()
     ui->lblTimer->setText(QString("%1").arg(m_DataManager->m_CurrentProfileLIFU->timer));
     ui->lblVoltage->setText(QString("%1").arg(m_DataManager->m_CurrentProfileLIFU->voltage));
     ui->lblName->setText(m_DataManager->m_CurrentProfileLIFU->profileName);
+
+    m_IsInEdit = false;
+    SetEditMode(false);
 }
 
 void MainWindowLIFU::OnClickEdit()
