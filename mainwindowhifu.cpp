@@ -22,6 +22,7 @@ MainWindowHIFU::MainWindowHIFU(QWidget *parent)
     InitEvent();
     SetConnectState(ConnectState::DISCONNECT);
     SetEmitState(EmitState::IDLE);
+    OnCurrentProfileChange(nullptr, m_DataManager->m_CurrentProfile);
     //QTimer::singleShot(5000, [=](){SetConnectState(ConnectState::CONNECT);});
 }
 
@@ -146,6 +147,8 @@ void MainWindowHIFU::OnClickLoad()
     delete dialog;
     if(loadIndex == -1)
         return;
+    QSharedPointer<Profile> pre = QSharedPointer<Profile>::create();
+    pre->CopyInfo(m_DataManager->m_CurrentProfile.get());
     if(loadIndex < ConstValue::GetInstance()->DeleteLimit)
     {
         m_DataManager->m_CurrentProfile = m_DataManager->m_ProfileList[loadIndex];
@@ -161,6 +164,7 @@ void MainWindowHIFU::OnClickLoad()
         }
         m_DataManager->DeleteProfile(m_DataManager->m_ProfileList[index]);
     }
+    OnCurrentProfileChange(pre, m_DataManager->m_CurrentProfile);
 }
 
 void MainWindowHIFU::OnClickLocal()
@@ -189,6 +193,8 @@ void MainWindowHIFU::OnClickSave()
     dialog->move(0, 0);
     dialog->exec();
     delete dialog;
+    QSharedPointer<Profile> pre = QSharedPointer<Profile>::create();
+    pre->CopyInfo(m_DataManager->m_CurrentProfile.get());
     QSharedPointer<Profile> profile = QSharedPointer<Profile>::create();
     profile->profileName = ui->lblName->text();
     profile->isppa = ui->lblIsppa->text().toDouble();
@@ -245,6 +251,31 @@ void MainWindowHIFU::OnClickSave()
     {
         SetEditMode(false);
         OnClickCancel();
+    }
+    OnCurrentProfileChange(pre, m_DataManager->m_CurrentProfile);
+}
+
+void MainWindowHIFU::OnCurrentProfileChange(QSharedPointer<Profile> prev, QSharedPointer<Profile> curr)
+{
+    if(prev.isNull() || prev->voltage != curr->voltage)
+    {
+        SendCommandSetHvout(curr->voltage);
+    }
+    if(prev.isNull() || prev->freq != curr->freq)
+    {
+        SendCommandSetFrequency(curr->freq);
+    }
+    if(prev.isNull() || prev->period != curr->period)
+    {
+        SendCommandSetPri(curr->period);
+    }
+    if(prev.isNull())
+    {
+        SendCommandSetPD(50);
+    }
+    if(prev.isNull() || prev->timer != curr->timer)
+    {
+        SendCommandSetEmitTime(curr->timer);
     }
 }
 

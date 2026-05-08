@@ -39,6 +39,8 @@ private:
     void OnClickOption();
     void OnClickSave();
 
+    void OnCurrentProfileChange(QSharedPointer<Profile> prev, QSharedPointer<Profile> curr);
+
     void OnModeAdvanceRFChange();
     void OnModePowerLimitChange();
     void OnModeTriggerChange();

@@ -112,7 +112,7 @@ void BaseWindow::SendCommandSetHvout(uint32_t value)
     if (value > 6000)
         return;
     uint8_t commandId = 0x04;
-    SendCommandData4(commandId, value);
+    SendCommandData4(commandId, value*100);
 }
 
 void BaseWindow::SendCommandSetPD(uint32_t value)
