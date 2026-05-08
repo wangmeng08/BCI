@@ -22,7 +22,7 @@ MainWindowHIFU::MainWindowHIFU(QWidget *parent)
     InitEvent();
     SetConnectState(ConnectState::DISCONNECT);
     SetEmitState(EmitState::IDLE);
-    QTimer::singleShot(5000, [=](){SetConnectState(ConnectState::CONNECT);});
+    //QTimer::singleShot(5000, [=](){SetConnectState(ConnectState::CONNECT);});
 }
 
 MainWindowHIFU::~MainWindowHIFU()
@@ -264,6 +264,11 @@ void MainWindowHIFU::OnModePowerLimitChange()
 }
 
 void MainWindowHIFU::OnModeTriggerChange()
+{
+
+}
+
+void MainWindowHIFU::SendSetAfterSave(bool isInit)
 {
 
 }

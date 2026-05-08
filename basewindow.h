@@ -41,7 +41,7 @@ protected:
     void SendCommandSystemHostConnectStatus(HostControlMode mode);
     void SendCommandSystemHostCheckStatus();
     void SendCommandSystemHostCheckSN();
-    void SendCommandSystemLIFUModel();
+    void SendCommandSystemModel();
     void SendCommandSystemTriggerModel();
 
     void SetConnectState(ConnectState state);
@@ -85,6 +85,8 @@ signals:
 
     void serialPortClose();
     void serialPortOpen();
+
+    void test(uint8_t cmd);
 };
 
 #endif // BASEWINDOW_H

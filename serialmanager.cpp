@@ -15,6 +15,11 @@ SerialManager::SerialManager()
 	heartTimer = new QTimer;
 	connect(heartTimer, &QTimer::timeout, this, &SerialManager::OnHeartTimeBeat);
 	heartTimer->stop();
+
+    m_SendTimeoutTimer = new QTimer(this);
+    m_SendTimeoutTimer->setSingleShot(true);
+    m_SendTimeoutTimer->setInterval(200);
+    connect(m_SendTimeoutTimer, &QTimer::timeout, this, &SerialManager::OnSendTimeout);
 }
 
 SerialManager::~SerialManager() {
@@ -121,6 +126,13 @@ void SerialManager::OnSerialDataRead()
     {
         emit readSerialData(packet);
         WriteQByteArrayLog(packet);
+
+        if (m_IsSending)
+        {
+            m_SendTimeoutTimer->stop();
+            m_IsSending = false;
+            TrySendNext();
+        }
     }
 }
 
@@ -150,11 +162,39 @@ void SerialManager::InitSerialPort()
 
 void SerialManager::Send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data)
 {
+    //if (!m_SerialPort || !m_SerialPort->isOpen())
+      //  return;
+    QByteArray packet = PackPacket(cmd, addr, len, data);
+    m_SendQueue.enqueue(packet);
+    TrySendNext();
+}
+
+void SerialManager::Test(uint8_t cmd)
+{
+    emit writeLog("Test");
+}
+
+void SerialManager::TrySendNext()
+{
+    emit writeLog("TrySendNext");
+    if (m_IsSending)
+        return;
+    if (m_SendQueue.isEmpty())
+        return;
     if (!m_SerialPort || !m_SerialPort->isOpen())
         return;
-    QByteArray packet = PackPacket(cmd, addr, len, data);
+
+    QByteArray packet = m_SendQueue.dequeue();
+    m_IsSending = true;
     m_SerialPort->write(packet);
     WriteQByteArrayLog(packet);
+    m_SendTimeoutTimer->start();
+}
+
+void SerialManager::OnSendTimeout()
+{
+    m_IsSending = false;
+    TrySendNext();
 }
 
 void SerialManager::WriteQByteArrayLog(QByteArray data, bool isReceiveInfo)

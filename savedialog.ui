@@ -153,9 +153,9 @@
         <widget class="QPushButton" name="btnSaveNew">
          <property name="geometry">
           <rect>
-           <x>228</x>
-           <y>270</y>
-           <width>241</width>
+           <x>160</x>
+           <y>300</y>
+           <width>220</width>
            <height>90</height>
           </rect>
          </property>
@@ -172,15 +172,15 @@
           </size>
          </property>
          <property name="text">
-          <string>Save A New</string>
+          <string>Save As</string>
          </property>
         </widget>
         <widget class="QPushButton" name="btnSave">
          <property name="geometry">
           <rect>
-           <x>24</x>
-           <y>270</y>
-           <width>180</width>
+           <x>160</x>
+           <y>160</y>
+           <width>220</width>
            <height>90</height>
           </rect>
          </property>
@@ -192,7 +192,7 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>180</width>
+           <width>1800</width>
            <height>90</height>
           </size>
          </property>
@@ -203,8 +203,8 @@
         <widget class="QPushButton" name="btnCancel">
          <property name="geometry">
           <rect>
-           <x>493</x>
-           <y>270</y>
+           <x>680</x>
+           <y>440</y>
            <width>180</width>
            <height>90</height>
           </rect>
@@ -228,26 +228,39 @@
         <widget class="QPushButton" name="btnConfirm">
          <property name="geometry">
           <rect>
-           <x>697</x>
-           <y>270</y>
-           <width>180</width>
+           <x>480</x>
+           <y>160</y>
+           <width>280</width>
            <height>90</height>
           </rect>
          </property>
          <property name="minimumSize">
           <size>
-           <width>180</width>
+           <width>240</width>
            <height>90</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>180</width>
+           <width>380</width>
            <height>90</height>
           </size>
          </property>
          <property name="text">
-          <string>Confirm</string>
+          <string>Save To Default</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="lineEdit">
+         <property name="geometry">
+          <rect>
+           <x>480</x>
+           <y>300</y>
+           <width>280</width>
+           <height>90</height>
+          </rect>
+         </property>
+         <property name="placeholderText">
+          <string>Profile Name</string>
          </property>
         </widget>
        </widget>

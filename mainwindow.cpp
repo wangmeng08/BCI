@@ -21,6 +21,8 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<LogType>("LogType");
     qRegisterMetaType<Page>("Page");
     qRegisterMetaType<TriggerMode>("TriggerMode");
+    qRegisterMetaType<uint8_t>("uint8_t");
+    qRegisterMetaType<uint16_t>("uint16_t");
 
     InitLogManager();
     m_Stack = new QStackedWidget(this);

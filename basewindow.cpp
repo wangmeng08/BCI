@@ -12,6 +12,7 @@ BaseWindow::BaseWindow(QWidget *parent)
     m_Timer = new QTimer(this);
     m_Timer->setInterval(m_timerIntervalMs);
     connect(m_Timer, &QTimer::timeout, this, &BaseWindow::EmitTimerJump);
+    SendCommandSystemModel();
 }
 
 uint8_t BaseWindow::GetDeviceAddr()
@@ -56,11 +57,13 @@ void BaseWindow::InitSerialManager()
     serialPortThread = new QThread();
     serialMer->moveToThread(serialPortThread);
     serialMer->m_SerialPort->moveToThread(serialPortThread);
-    serialMer->heartTimer->moveToThread(serialPortThread);
+    serialMer->m_SendTimeoutTimer->moveToThread(serialPortThread);
     connect(serialPortThread, &QThread::finished, serialMer, &QObject::deleteLater);
     connect(serialMer, &SerialManager::writeLog, this, &BaseWindow::WriteCommLog);
     connect(this, &BaseWindow::heartTimerStart, serialMer, &SerialManager::HeartTimerStop);
     connect(this, &BaseWindow::heartTimerStop, serialMer, &SerialManager::HeartTimerStop);
+    connect(this, &BaseWindow::send, serialMer, &SerialManager::Send);
+    connect(this, &BaseWindow::test, serialMer, &SerialManager::Test);
     connect(this, &BaseWindow::serialPortOpen, serialMer, &SerialManager::SerialPortOpen);
     serialPortThread->start();
     emit serialPortOpen();
@@ -194,15 +197,13 @@ void BaseWindow::SendCommandSystemHostCheckSN()
     emit send(commandId, deviceAddr, len, data);
 }
 
-void BaseWindow::SendCommandSystemLIFUModel()
+void BaseWindow::SendCommandSystemModel()
 {
-    if(m_DataManager->GetClinicalMode() == ClinicalMode::HIFU)
-        return;
     uint8_t deviceAddr = 0x04;
     uint8_t commandId = 0x06;
     uint16_t len = 4;
     QByteArray data(4, 0x00);
-    if(m_DataManager->GetClinicalMode() == ClinicalMode::LIFU128)
+    if(m_DataManager->GetClinicalMode() != ClinicalMode::HIFU)
         data[3] = 1;
     emit send(commandId, deviceAddr, len, data);
 }

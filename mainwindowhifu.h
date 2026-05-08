@@ -43,6 +43,8 @@ private:
     void OnModePowerLimitChange();
     void OnModeTriggerChange();
 
+    void SendSetAfterSave(bool isInit=false);
+
     void SetAdvanceBtnState();
     void SetEditMode(bool isEdit);
 

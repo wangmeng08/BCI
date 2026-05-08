@@ -23,6 +23,7 @@ public:
     ~SerialManager();
     QSerialPort *m_SerialPort = nullptr;
     QTimer *heartTimer = nullptr;
+    QTimer *m_SendTimeoutTimer = nullptr;
 
 
 public slots:
@@ -30,24 +31,32 @@ public slots:
     void HeartTimerStop();
     void SerialPortClose();
     void SerialPortOpen();
+    void Send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data);
+
+    void Test(uint8_t cmd);
 
 private:
     uint8_t m_Index = 0;
     QByteArray m_Buffer;
     QList<QByteArray> serialDataList;
 
+    QQueue<QByteArray> m_SendQueue;
+    bool m_IsSending = false;
+
     bool ParseSerialData(QByteArray& packet);
 
     void InitSerialPort();
-    void Send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data);
+    void TrySendNext();
     void WriteQByteArrayLog(QByteArray data, bool isReceiveInfo = false);
 
     QByteArray PackPacket(uint8_t cmd, uint8_t addr, uint16_t len, const QByteArray& data);
 
     uint32_t Crc32(const QByteArray& data);
-protected Q_SLOTS:
+
+protected slots:
     void OnHeartTimeBeat();
     void OnSerialDataRead();
+    void OnSendTimeout();
 
 Q_SIGNALS:
     void readSerialData(QByteArray data);
