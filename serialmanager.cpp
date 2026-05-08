@@ -20,6 +20,11 @@ SerialManager::SerialManager()
     m_SendTimeoutTimer->setSingleShot(true);
     m_SendTimeoutTimer->setInterval(200);
     connect(m_SendTimeoutTimer, &QTimer::timeout, this, &SerialManager::OnSendTimeout);
+
+    m_PostSendDelayTimer = new QTimer(this);
+    m_PostSendDelayTimer->setSingleShot(true);
+    m_PostSendDelayTimer->setInterval(500);
+    connect(m_PostSendDelayTimer, &QTimer::timeout, this, &SerialManager::OnPostSendDelayTimeout);
 }
 
 SerialManager::~SerialManager() {
@@ -118,6 +123,30 @@ bool SerialManager::ParseSerialData(QByteArray &packet)
     return false;
 }
 
+bool SerialManager::ShouldDelaySend(QByteArray &packet)
+{
+    if (packet.size() < 5)
+        return false;
+    bool isNeed = false;
+    int delayTime = 500;
+    if ((uint8_t)packet[3] == 0x18 && (uint8_t)packet[4] == 0x04)
+    {
+        isNeed = true;
+        delayTime = 200;
+    }
+    else if((uint8_t)packet[3] == 0x08 && (uint8_t)packet[4] == 0x01)
+    {
+        isNeed = true;
+    }
+    if(isNeed)
+    {
+        m_PostSendDelaying = true;
+        m_PostSendDelayTimer->setInterval(delayTime);
+        m_PostSendDelayTimer->start();
+    }
+    return isNeed;
+}
+
 void SerialManager::OnSerialDataRead()
 {
     m_Buffer.append(m_SerialPort->readAll());
@@ -179,6 +208,8 @@ void SerialManager::TrySendNext()
     emit writeLog("TrySendNext");
     if (m_IsSending)
         return;
+    if (m_PostSendDelaying)
+        return;
     if (m_SendQueue.isEmpty())
         return;
     if (!m_SerialPort || !m_SerialPort->isOpen())
@@ -189,11 +220,26 @@ void SerialManager::TrySendNext()
     m_SerialPort->write(packet);
     WriteQByteArrayLog(packet);
     m_SendTimeoutTimer->start();
+
+    if (packet.size() >= 5 &&
+        (uint8_t)packet[3] == 0x08 &&
+        (uint8_t)packet[4] == 0x01)
+    {
+        m_PostSendDelaying = true;
+        m_PostSendDelayTimer->start();
+    }
 }
 
 void SerialManager::OnSendTimeout()
 {
     m_IsSending = false;
+    TrySendNext();
+}
+
+void SerialManager::OnPostSendDelayTimeout()
+{
+    m_PostSendDelaying = false;
+     m_IsSending = false;
     TrySendNext();
 }
 

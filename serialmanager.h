@@ -24,6 +24,7 @@ public:
     QSerialPort *m_SerialPort = nullptr;
     QTimer *heartTimer = nullptr;
     QTimer *m_SendTimeoutTimer = nullptr;
+    QTimer *m_PostSendDelayTimer = nullptr;
 
 
 public slots:
@@ -42,8 +43,10 @@ private:
 
     QQueue<QByteArray> m_SendQueue;
     bool m_IsSending = false;
+    bool m_PostSendDelaying = false;
 
     bool ParseSerialData(QByteArray& packet);
+    bool ShouldDelaySend(QByteArray& packet);
 
     void InitSerialPort();
     void TrySendNext();
@@ -57,6 +60,7 @@ protected slots:
     void OnHeartTimeBeat();
     void OnSerialDataRead();
     void OnSendTimeout();
+    void OnPostSendDelayTimeout();
 
 Q_SIGNALS:
     void readSerialData(QByteArray data);

@@ -272,6 +272,7 @@ void MainWindowHIFU::OnCurrentProfileChange(QSharedPointer<Profile> prev, QShare
     if(prev.isNull())
     {
         SendCommandSetPD(50);
+        SendCommandSystemTriggerModel();
     }
     if(prev.isNull() || prev->timer != curr->timer)
     {
@@ -296,7 +297,7 @@ void MainWindowHIFU::OnModePowerLimitChange()
 
 void MainWindowHIFU::OnModeTriggerChange()
 {
-
+    SendCommandSystemTriggerModel();
 }
 
 void MainWindowHIFU::SendSetAfterSave(bool isInit)

@@ -45,10 +45,9 @@ void LogManager::OnTimerHandler()
 	if (m_LogBuffer.isEmpty())
 		return;
 	QTextStream out(&logFile);
-	out << m_LogBuffer.join("\n");  // 将QStringList合并为一个单一字符串，并写入文件
-	out.flush();  // 确保数据立即写入文件
+    out << m_LogBuffer.join("\n");
+    out.flush();
 
-	// 清空缓存
 	m_LogBuffer.clear();
 }
 

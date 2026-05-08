@@ -82,6 +82,7 @@ void BaseWindow::OnClickOn()
     SetEmitState(EmitState::ON);
     UpdateBtnState();
     EmitTimerStart();
+    SendCommandSystemEmit();
 }
 
 void BaseWindow::SendCommandData4(uint8_t commandId, uint32_t value)
@@ -152,6 +153,7 @@ void BaseWindow::SendCommandSetChannelDelay(const QVector<uint32_t> &delays)
 
 void BaseWindow::SendCommandSystemEmit()
 {
+    SendCommandSystemEmitReady();
     uint8_t deviceAddr = 0x04;
     uint8_t commandId = 0x0E;
     uint16_t len = 4;
