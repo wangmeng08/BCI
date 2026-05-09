@@ -10,7 +10,17 @@ enum class ClinicalMode{
 
 enum class ConnectState{
     DISCONNECT = 0,
-    CONNECT
+    STANDBY,
+    OVERHEAT = 2,
+    OVERCURRENT = 3,
+    NORMAL_OUTPUT = 4
+};
+
+enum class DataType : uint8_t
+{
+    HIFU_DATA = 1,
+    LIFU_DATA = 2,
+    SYSTEM_DATA = 4
 };
 
 enum class EmitState{

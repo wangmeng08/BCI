@@ -16,6 +16,7 @@ public:
     virtual void InitProfileData() = 0;
 protected:
     uint8_t GetDeviceAddr();
+    uint32_t GetValueFromQByteArray(QByteArray data, int startIndex, int len);
 
     void EmitTimerJump();
     void EmitTimerStart();
@@ -26,6 +27,11 @@ protected:
 
     void OnClickOff();
     void OnClickOn();
+
+    void ReadDataHIFU(QByteArray data);
+    void ReadDataLIFU(QByteArray data);
+    void ReadDataSystem(QByteArray data);
+    void ReadSerialData(QByteArray data);
 
     void SendCommandData4(uint8_t commandId, uint32_t value);
     void SendCommandSetEmitTime(uint32_t value);
@@ -54,6 +60,7 @@ protected:
     virtual QLabel *GetConnectLabel() = 0;
     virtual QLabel *GetEmitLabel() = 0;
     virtual QLabel *GetStateIcon() = 0;
+    virtual void SendInitCommand = 0;
     virtual void SetTimerInfo() = 0;
     virtual void UpdateBtnState() = 0;
 
@@ -62,9 +69,9 @@ protected:
     int m_CurrentTime = 0;
     const int m_timerIntervalMs = 50;
 
-    QStringList m_ConnectDesList = {tr("disconnected"), tr("connected")};
+    QStringList m_ConnectDesList = {tr("disconnected"), tr("standby"), tr("overheat"), tr("overcurrent"), tr("normal output")};
     QStringList m_ConnectIconQss = {"border-radius: 15px; background-color:#C0CBDF;", "border-radius: 15px; background-color:#44C063;"};
-    QStringList m_ConnectQss = {"color:rgba(128,128,128,128)", "color:rgba(0,255,0,128)"};
+    QStringList m_ConnectQss = {"color:rgba(128,128,128,128)", "color:rgba(0,255,0,128)", "color:rgba(0,255,0,128)", "color:rgba(0,255,0,128)", "color:rgba(0,255,0,128)"};
 
     QStringList m_EmitDesList = {tr("Idle"), tr("On"), tr("Error")};
     QStringList m_EmitQss = {"color:rgba(128,128,128,128)", "color:rgba(0,255,0,128)", "color:rgba(128,128,128,128)"};
@@ -74,7 +81,7 @@ protected:
 
     DB *m_DB = nullptr;
 
-    ConnectState m_ConnectSate = ConnectState::DISCONNECT;
+    ConnectState m_ConnectState = ConnectState::DISCONNECT;
     EmitState m_State = EmitState::IDLE;
     DataManager *m_DataManager = nullptr;
 signals:

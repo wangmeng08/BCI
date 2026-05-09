@@ -22,7 +22,6 @@ MainWindowHIFU::MainWindowHIFU(QWidget *parent)
     InitEvent();
     SetConnectState(ConnectState::DISCONNECT);
     SetEmitState(EmitState::IDLE);
-    OnCurrentProfileChange(nullptr, m_DataManager->m_CurrentProfile);
     //QTimer::singleShot(5000, [=](){SetConnectState(ConnectState::CONNECT);});
 }
 
@@ -49,6 +48,12 @@ QLabel *MainWindowHIFU::GetEmitLabel()
 QLabel *MainWindowHIFU::GetStateIcon()
 {
     return ui->lblStateIcon;
+}
+
+void MainWindowHIFU::SendInitCommand()
+{
+    SendCommandSystemModel();
+    OnCurrentProfileChange(nullptr, m_DataManager->m_CurrentProfile);
 }
 
 void MainWindowHIFU::SetTimerInfo()

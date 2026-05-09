@@ -22,7 +22,7 @@ public:
 	SerialManager();
     ~SerialManager();
     QSerialPort *m_SerialPort = nullptr;
-    QTimer *heartTimer = nullptr;
+    QTimer *m_HeartTimer = nullptr;
     QTimer *m_SendTimeoutTimer = nullptr;
     QTimer *m_PostSendDelayTimer = nullptr;
 

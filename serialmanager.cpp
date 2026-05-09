@@ -12,9 +12,10 @@ SerialManager::SerialManager()
 {
 	InitSerialPort();
 
-	heartTimer = new QTimer;
-	connect(heartTimer, &QTimer::timeout, this, &SerialManager::OnHeartTimeBeat);
-	heartTimer->stop();
+    m_HeartTimer = new QTimer;
+    connect(m_HeartTimer, &QTimer::timeout, this, &SerialManager::OnHeartTimeBeat);
+    m_HeartTimer->setInterval(1000);
+    m_HeartTimer->stop();
 
     m_SendTimeoutTimer = new QTimer(this);
     m_SendTimeoutTimer->setSingleShot(true);
@@ -187,12 +188,13 @@ void SerialManager::InitSerialPort()
         emit writeLog("open port failed");
 		return;
     }
+    m_HeartTimer->start();
 }
 
 void SerialManager::Send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data)
 {
-    //if (!m_SerialPort || !m_SerialPort->isOpen())
-      //  return;
+    if (!m_SerialPort || !m_SerialPort->isOpen())
+        return;
     QByteArray packet = PackPacket(cmd, addr, len, data);
     m_SendQueue.enqueue(packet);
     TrySendNext();
@@ -332,6 +334,10 @@ uint32_t SerialManager::Crc32(const QByteArray &payload)
 
 void SerialManager::OnHeartTimeBeat()
 {
-
+    uint8_t deviceAddr = 0x04;
+    uint8_t commandId = 0x02;
+    uint16_t len = 4;
+    QByteArray data(4, 0x00);
+    Send(commandId, deviceAddr, len, data);
 }
 

@@ -41,6 +41,11 @@ QLabel *MainWindowLIFU4::GetStateIcon()
     return ui->lblStateIcon;
 }
 
+void MainWindowLIFU4::SendInitCommand()
+{
+
+}
+
 void MainWindowLIFU4::SetTimerInfo()
 {
     ui->lblTimer->setText(QString("%1").arg(m_CurrentTime));

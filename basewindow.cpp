@@ -12,15 +12,26 @@ BaseWindow::BaseWindow(QWidget *parent)
     m_Timer = new QTimer(this);
     m_Timer->setInterval(m_timerIntervalMs);
     connect(m_Timer, &QTimer::timeout, this, &BaseWindow::EmitTimerJump);
-    SendCommandSystemModel();
 }
 
 uint8_t BaseWindow::GetDeviceAddr()
 {
-    uint8_t deviceAddr = 2;
+    uint8_t deviceAddr = static_cast<uint8_t>(DataType::LIFU_DATA);
     if(m_DataManager->GetClinicalMode() == ClinicalMode::HIFU)
-        deviceAddr = 1;
+        deviceAddr = static_cast<uint8_t>(DataType::HIFU_DATA);
     return deviceAddr;
+}
+
+uint32_t BaseWindow::GetValueFromQByteArray(QByteArray data, int startIndex, int len)
+{
+    if(data.size() < startIndex + 4)
+        return 0;
+    uint32_t result =
+        (static_cast<uint8_t>(data[startIndex]) << 24) |
+        (static_cast<uint8_t>(data[startIndex + 1]) << 16) |
+        (static_cast<uint8_t>(data[startIndex + 2]) << 8) |
+        static_cast<uint8_t>(data[startIndex + 3]);
+    return result;
 }
 
 void BaseWindow::EmitTimerJump()
@@ -57,9 +68,12 @@ void BaseWindow::InitSerialManager()
     serialPortThread = new QThread();
     serialMer->moveToThread(serialPortThread);
     serialMer->m_SerialPort->moveToThread(serialPortThread);
+    serialMer->m_HeartTimer->moveToThread(serialPortThread);
     serialMer->m_SendTimeoutTimer->moveToThread(serialPortThread);
+    serialMer->m_PostSendDelayTimer->moveToThread(serialPortThread);
     connect(serialPortThread, &QThread::finished, serialMer, &QObject::deleteLater);
     connect(serialMer, &SerialManager::writeLog, this, &BaseWindow::WriteCommLog);
+    connect(serialMer, &SerialManager::readSerialData, this, &BaseWindow::WriteCommLog);
     connect(this, &BaseWindow::heartTimerStart, serialMer, &SerialManager::HeartTimerStop);
     connect(this, &BaseWindow::heartTimerStop, serialMer, &SerialManager::HeartTimerStop);
     connect(this, &BaseWindow::send, serialMer, &SerialManager::Send);
@@ -83,6 +97,54 @@ void BaseWindow::OnClickOn()
     UpdateBtnState();
     EmitTimerStart();
     SendCommandSystemEmit();
+}
+
+void BaseWindow::ReadDataHIFU(QByteArray data)
+{
+
+}
+
+void BaseWindow::ReadDataLIFU(QByteArray data)
+{
+
+}
+
+void BaseWindow::ReadDataSystem(QByteArray data)
+{
+    uint8_t commandType = static_cast<uint8_t>(data[3]);
+    switch(commandType)
+    {
+    case 0x03:
+        uint32_t deviceStatus = GetValueFromQByteArray(data, 7, 4);
+        auto oldState = m_ConnectState;
+        if(deviceStatus > static_cast<uint32_t>(ConnectState::NORMAL_OUTPUT))
+            m_ConnectState = ConnectState::DISCONNECT;
+        else
+            m_ConnectState = static_cast<ConnectState>(deviceStatus);
+        SetConnectState(m_ConnectState);
+        if(oldState == ConnectState::DISCONNECT && m_ConnectState != oldState)
+        {
+            SendInitCommand();
+        }
+        uint32_t hvout = GetValueFromQByteArray(data, 11, 4);
+
+        uint32_t temp = GetValueFromQByteArray(data, 15, 4);
+        break;
+    }
+}
+
+void BaseWindow::ReadSerialData(QByteArray data)
+{
+    uint8_t packetType = static_cast<uint8_t>(data[4]);
+    if (packetType == static_cast<uint8_t>(DataType::SYSTEM_DATA)) {
+        ReadDataSystem(data);
+    }
+    else if (packetType == static_cast<uint8_t>(DataType::HIFU_DATA)) {
+        ReadDataHIFU(data);
+    }
+    else if (packetType == static_cast<uint8_t>(DataType::LIFU_DATA)) {
+        ReadDataLIFU(data);
+    }
 }
 
 void BaseWindow::SendCommandData4(uint8_t commandId, uint32_t value)
@@ -154,7 +216,7 @@ void BaseWindow::SendCommandSetChannelDelay(const QVector<uint32_t> &delays)
 void BaseWindow::SendCommandSystemEmit()
 {
     SendCommandSystemEmitReady();
-    uint8_t deviceAddr = 0x04;
+    uint8_t deviceAddr = static_cast<uint8_t>(DataType::SYSTEM_DATA);
     uint8_t commandId = 0x0E;
     uint16_t len = 4;
     QByteArray data(4, 0x00);
@@ -163,7 +225,7 @@ void BaseWindow::SendCommandSystemEmit()
 
 void BaseWindow::SendCommandSystemEmitReady()
 {
-    uint8_t deviceAddr = 0x04;
+    uint8_t deviceAddr = static_cast<uint8_t>(DataType::SYSTEM_DATA);
     uint8_t commandId = 0x18;
     uint16_t len = 4;
     QByteArray data(4, 0x00);
@@ -172,7 +234,7 @@ void BaseWindow::SendCommandSystemEmitReady()
 
 void BaseWindow::SendCommandSystemHostConnectStatus(HostControlMode mode)
 {
-    uint8_t deviceAddr = 0x04;
+    uint8_t deviceAddr = static_cast<uint8_t>(DataType::SYSTEM_DATA);
     uint8_t commandId = 0x04;
     uint16_t len = 4;
     QByteArray data(4, 0x00);
@@ -183,7 +245,7 @@ void BaseWindow::SendCommandSystemHostConnectStatus(HostControlMode mode)
 
 void BaseWindow::SendCommandSystemHostCheckStatus()
 {
-    uint8_t deviceAddr = 0x04;
+    uint8_t deviceAddr = static_cast<uint8_t>(DataType::SYSTEM_DATA);
     uint8_t commandId = 0x02;
     uint16_t len = 4;
     QByteArray data(4, 0x00);
@@ -192,7 +254,7 @@ void BaseWindow::SendCommandSystemHostCheckStatus()
 
 void BaseWindow::SendCommandSystemHostCheckSN()
 {
-    uint8_t deviceAddr = 0x04;
+    uint8_t deviceAddr = static_cast<uint8_t>(DataType::SYSTEM_DATA);
     uint8_t commandId = 0x18;
     uint16_t len = 4;
     QByteArray data(4, 0x00);
@@ -201,7 +263,7 @@ void BaseWindow::SendCommandSystemHostCheckSN()
 
 void BaseWindow::SendCommandSystemModel()
 {
-    uint8_t deviceAddr = 0x04;
+    uint8_t deviceAddr = static_cast<uint8_t>(DataType::SYSTEM_DATA);
     uint8_t commandId = 0x06;
     uint16_t len = 4;
     QByteArray data(4, 0x00);
@@ -212,7 +274,7 @@ void BaseWindow::SendCommandSystemModel()
 
 void BaseWindow::SendCommandSystemTriggerModel()
 {
-    uint8_t deviceAddr = 0x04;
+    uint8_t deviceAddr = static_cast<uint8_t>(DataType::SYSTEM_DATA);
     uint8_t commandId = 0x14;
     uint16_t len = 4;
     QByteArray data(4, 0x00);
