@@ -147,11 +147,18 @@ void BaseWindow::ReadSerialData(QByteArray data)
     }
 }
 
+void BaseWindow::Send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data)
+{
+    if(m_ConnectState == ConnectState::DISCONNECT)
+        return;
+    emit send(cmd, addr, len, data);
+}
+
 void BaseWindow::SendCommandData4(uint8_t commandId, uint32_t value)
 {
     uint8_t deviceAddr = GetDeviceAddr();
     QByteArray data = FromUint32(value);
-    emit send(commandId, deviceAddr, 4, data);
+    Send(commandId, deviceAddr, 4, data);
 }
 
 void BaseWindow::SendCommandSetEmitTime(uint32_t value)
@@ -210,7 +217,7 @@ void BaseWindow::SendCommandSetChannelDelay(const QVector<uint32_t> &delays)
         data.append(char(delay & 0xFF));
     }
 
-    emit send(commandId, deviceAddr, len, data);
+    Send(commandId, deviceAddr, len, data);
 }
 
 void BaseWindow::SendCommandSystemEmit()
@@ -220,7 +227,7 @@ void BaseWindow::SendCommandSystemEmit()
     uint8_t commandId = 0x0E;
     uint16_t len = 4;
     QByteArray data(4, 0x00);
-    emit send(commandId, deviceAddr, len, data);
+    Send(commandId, deviceAddr, len, data);
 }
 
 void BaseWindow::SendCommandSystemEmitReady()
@@ -229,7 +236,7 @@ void BaseWindow::SendCommandSystemEmitReady()
     uint8_t commandId = 0x18;
     uint16_t len = 4;
     QByteArray data(4, 0x00);
-    emit send(commandId, deviceAddr, len, data);
+    Send(commandId, deviceAddr, len, data);
 }
 
 void BaseWindow::SendCommandSystemHostConnectStatus(HostControlMode mode)
@@ -240,7 +247,7 @@ void BaseWindow::SendCommandSystemHostConnectStatus(HostControlMode mode)
     QByteArray data(4, 0x00);
     if(mode == HostControlMode::REMOTE)
         data[3] = 1;
-    emit send(commandId, deviceAddr, len, data);
+    Send(commandId, deviceAddr, len, data);
 }
 
 void BaseWindow::SendCommandSystemHostCheckStatus()
@@ -249,7 +256,7 @@ void BaseWindow::SendCommandSystemHostCheckStatus()
     uint8_t commandId = 0x02;
     uint16_t len = 4;
     QByteArray data(4, 0x00);
-    emit send(commandId, deviceAddr, len, data);
+    Send(commandId, deviceAddr, len, data);
 }
 
 void BaseWindow::SendCommandSystemHostCheckSN()
@@ -258,7 +265,7 @@ void BaseWindow::SendCommandSystemHostCheckSN()
     uint8_t commandId = 0x18;
     uint16_t len = 4;
     QByteArray data(4, 0x00);
-    emit send(commandId, deviceAddr, len, data);
+    Send(commandId, deviceAddr, len, data);
 }
 
 void BaseWindow::SendCommandSystemModel()
@@ -269,7 +276,7 @@ void BaseWindow::SendCommandSystemModel()
     QByteArray data(4, 0x00);
     if(m_DataManager->GetClinicalMode() != ClinicalMode::HIFU)
         data[3] = 1;
-    emit send(commandId, deviceAddr, len, data);
+    Send(commandId, deviceAddr, len, data);
 }
 
 void BaseWindow::SendCommandSystemTriggerModel()
@@ -279,7 +286,7 @@ void BaseWindow::SendCommandSystemTriggerModel()
     uint16_t len = 4;
     QByteArray data(4, 0x00);
     data[3] = static_cast<uint8_t>(m_DataManager->m_TriggerMode);
-    emit send(commandId, deviceAddr, len, data);
+    Send(commandId, deviceAddr, len, data);
 }
 
 void BaseWindow::SetConnectState(ConnectState state)

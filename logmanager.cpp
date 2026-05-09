@@ -46,6 +46,7 @@ void LogManager::OnTimerHandler()
 		return;
 	QTextStream out(&logFile);
     out << m_LogBuffer.join("\n");
+    out << ("\n");
     out.flush();
 
 	m_LogBuffer.clear();

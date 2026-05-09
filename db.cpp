@@ -467,6 +467,7 @@ bool DB::ProfileModifyInfo(QSharedPointer<Profile> profile, QSharedPointer<Profi
             freq        = :freq,
             temp        = :temp,
             burstLen    = :burstLen,
+            voltage     = :voltage,
             hcd1        = :hcd1,
             freq1       = :freq1,
             delay1      = :delay1,

@@ -32,7 +32,7 @@ protected:
     void ReadDataLIFU(QByteArray data);
     void ReadDataSystem(QByteArray data);
     void ReadSerialData(QByteArray data);
-
+    void Send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data);
     void SendCommandData4(uint8_t commandId, uint32_t value);
     void SendCommandSetEmitTime(uint32_t value);
     void SendCommandSetFrequency(uint32_t value);
@@ -60,7 +60,7 @@ protected:
     virtual QLabel *GetConnectLabel() = 0;
     virtual QLabel *GetEmitLabel() = 0;
     virtual QLabel *GetStateIcon() = 0;
-    virtual void SendInitCommand = 0;
+    virtual void SendInitCommand() = 0;
     virtual void SetTimerInfo() = 0;
     virtual void UpdateBtnState() = 0;
 

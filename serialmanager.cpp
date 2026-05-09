@@ -10,9 +10,7 @@ SerialManager* SerialManager::GetInstance()
 
 SerialManager::SerialManager()
 {
-	InitSerialPort();
-
-    m_HeartTimer = new QTimer;
+    m_HeartTimer = new QTimer(this);
     connect(m_HeartTimer, &QTimer::timeout, this, &SerialManager::OnHeartTimeBeat);
     m_HeartTimer->setInterval(1000);
     m_HeartTimer->stop();
@@ -26,6 +24,7 @@ SerialManager::SerialManager()
     m_PostSendDelayTimer->setSingleShot(true);
     m_PostSendDelayTimer->setInterval(500);
     connect(m_PostSendDelayTimer, &QTimer::timeout, this, &SerialManager::OnPostSendDelayTimeout);
+    InitSerialPort();
 }
 
 SerialManager::~SerialManager() {
@@ -155,7 +154,7 @@ void SerialManager::OnSerialDataRead()
     while (ParseSerialData(packet))
     {
         emit readSerialData(packet);
-        WriteQByteArrayLog(packet);
+        WriteQByteArrayLog(packet, true);
 
         if (m_IsSending)
         {
@@ -207,7 +206,6 @@ void SerialManager::Test(uint8_t cmd)
 
 void SerialManager::TrySendNext()
 {
-    emit writeLog("TrySendNext");
     if (m_IsSending)
         return;
     if (m_PostSendDelaying)
