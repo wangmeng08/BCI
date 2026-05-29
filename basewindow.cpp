@@ -1,5 +1,6 @@
 #include "basewindow.h"
 #include "logmanager.h"
+#include "messageinfo.h"
 #include "serialmanager.h"
 #include "eventmanager.h"
 
@@ -65,6 +66,11 @@ void BaseWindow::InitDatabase()
 void BaseWindow::InitSerialManager()
 {
     SerialManager *serialMer = SerialManager::GetInstance();
+    if(serialMer->m_SerialPort == nullptr)
+    {
+        MessageInfo::ShowInformation(tr("No available port detected."));
+        return;
+    }
     serialPortThread = new QThread();
     serialMer->moveToThread(serialPortThread);
     serialMer->m_SerialPort->moveToThread(serialPortThread);

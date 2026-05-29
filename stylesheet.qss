@@ -155,3 +155,9 @@ QComboBox QAbstractItemView::item {
   border: none;
   background-color: #078AA2;
 }
+
+#SaveDialog #btnCancel{
+  background-color: transparent;
+  border-radius: 0px;
+  border-image: url(:/images/close.png);
+}

@@ -131,7 +131,8 @@ void MainWindowLIFU4::OnClickLoad()
 void MainWindowLIFU4::OnClickSave()
 {
     int saveType = 0;
-    SaveDialog *dialog = new SaveDialog(saveType, this);
+    QString saveName = "";
+    SaveDialog *dialog = new SaveDialog(saveType, saveName, this);
     auto size2 = this->size();
     dialog->resize(size2);
     dialog->move(0, 0);
@@ -155,6 +156,7 @@ void MainWindowLIFU4::OnClickSave()
         res = m_DataManager->SaveInfoToCurrentProfileLIFU4(profile);
         break;
     case(1):
+        profile->profileName = saveName;
         res = m_DataManager->SaveInfoToNewProfileLIFU4(profile);
         break;
     case(2):

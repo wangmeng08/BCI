@@ -203,16 +203,16 @@
         <widget class="QPushButton" name="btnCancel">
          <property name="geometry">
           <rect>
-           <x>680</x>
-           <y>440</y>
-           <width>180</width>
-           <height>90</height>
+           <x>855</x>
+           <y>15</y>
+           <width>30</width>
+           <height>30</height>
           </rect>
          </property>
          <property name="minimumSize">
           <size>
-           <width>180</width>
-           <height>90</height>
+           <width>26</width>
+           <height>26</height>
           </size>
          </property>
          <property name="maximumSize">
@@ -222,7 +222,7 @@
           </size>
          </property>
          <property name="text">
-          <string>Cancel</string>
+          <string/>
          </property>
         </widget>
         <widget class="QPushButton" name="btnConfirm">

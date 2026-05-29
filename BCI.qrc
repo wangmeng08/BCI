@@ -4,5 +4,6 @@
         <file>stylesheet.qss</file>
         <file>images/arrow_down.png</file>
         <file>images/arrow_up.png</file>
+        <file>images/close.png</file>
     </qresource>
 </RCC>

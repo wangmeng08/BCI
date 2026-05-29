@@ -168,12 +168,18 @@ void SerialManager::OnSerialDataRead()
 void SerialManager::InitSerialPort()
 {
     auto portList = QSerialPortInfo::availablePorts();
-    if(portList.count() == 0)
+    if(portList.isEmpty())
     {
-        emit writeLog("No available port name detected.");
+        qDebug("No available port detected.");
+        emit writeLog("No available port detected.");
         return;
     }
-    auto portName = portList[0].portName();
+    auto portName = portList.first().portName();
+    if (portName.isEmpty()) {
+        qDebug("No suitable serial port found.");
+        emit writeLog("No suitable serial port found.");
+        return;
+    }
     m_SerialPort = new QSerialPort(this);
     m_SerialPort->setPortName(portName);
     m_SerialPort->setBaudRate(QSerialPort::Baud115200);
@@ -184,10 +190,12 @@ void SerialManager::InitSerialPort()
     connect(m_SerialPort, &QSerialPort::readyRead, this, &SerialManager::OnSerialDataRead);
     if (!m_SerialPort->open(QIODevice::ReadWrite))
 	{
+        qDebug("open port failed");
         emit writeLog("open port failed");
 		return;
     }
     m_HeartTimer->start();
+    qDebug("InitSerialPort successful");
 }
 
 void SerialManager::Send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data)
