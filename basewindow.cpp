@@ -79,7 +79,7 @@ void BaseWindow::InitSerialManager()
     serialMer->m_PostSendDelayTimer->moveToThread(serialPortThread);
     connect(serialPortThread, &QThread::finished, serialMer, &QObject::deleteLater);
     connect(serialMer, &SerialManager::writeLog, this, &BaseWindow::WriteCommLog);
-    connect(serialMer, &SerialManager::readSerialData, this, &BaseWindow::WriteCommLog);
+    connect(serialMer, &SerialManager::readSerialData, this, &BaseWindow::ReadDataSystem);
     connect(this, &BaseWindow::heartTimerStart, serialMer, &SerialManager::HeartTimerStop);
     connect(this, &BaseWindow::heartTimerStop, serialMer, &SerialManager::HeartTimerStop);
     connect(this, &BaseWindow::send, serialMer, &SerialManager::Send);
@@ -130,7 +130,7 @@ void BaseWindow::ReadDataSystem(QByteArray data)
         SetConnectState(m_ConnectState);
         if(oldState == ConnectState::DISCONNECT && m_ConnectState != oldState)
         {
-            SendInitCommand();
+            //SendInitCommand();
         }
         uint32_t hvout = GetValueFromQByteArray(data, 11, 4);
 
@@ -155,8 +155,8 @@ void BaseWindow::ReadSerialData(QByteArray data)
 
 void BaseWindow::Send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data)
 {
-    if(m_ConnectState == ConnectState::DISCONNECT)
-        return;
+    //if(m_ConnectState == ConnectState::DISCONNECT)
+      //  return;
     emit send(cmd, addr, len, data);
 }
 
@@ -165,6 +165,20 @@ void BaseWindow::SendCommandData4(uint8_t commandId, uint32_t value)
     uint8_t deviceAddr = GetDeviceAddr();
     QByteArray data = FromUint32(value);
     Send(commandId, deviceAddr, 4, data);
+}
+
+void BaseWindow::SendCommandSetChannelSwitch()
+{
+    uint8_t deviceAddr = GetDeviceAddr();
+    uint8_t commandId = 0x06;
+    uint16_t len = 16;
+    QByteArray data(16, 0xff);
+    if(m_DataManager->GetClinicalMode() == ClinicalMode::LIFU4)
+    {
+        for(int i=4; i<16; i++)
+            data[i] = 0x00;
+    }
+    Send(commandId, deviceAddr, len, data);
 }
 
 void BaseWindow::SendCommandSetEmitTime(uint32_t value)

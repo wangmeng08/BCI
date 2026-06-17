@@ -34,6 +34,7 @@ protected:
     void ReadSerialData(QByteArray data);
     void Send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data);
     void SendCommandData4(uint8_t commandId, uint32_t value);
+    void SendCommandSetChannelSwitch();
     void SendCommandSetEmitTime(uint32_t value);
     void SendCommandSetFrequency(uint32_t value);
     void SendCommandSetHvout(uint32_t value);

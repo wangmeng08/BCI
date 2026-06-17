@@ -14,6 +14,7 @@ MainWindowLIFU::MainWindowLIFU(QWidget *parent) :
     InitEvent();
     SetConnectState(ConnectState::DISCONNECT);
     SetEmitState(EmitState::IDLE);
+    QTimer::singleShot(1000, [=](){SendInitCommand();});
 }
 
 MainWindowLIFU::~MainWindowLIFU()
@@ -43,7 +44,8 @@ QLabel *MainWindowLIFU::GetStateIcon()
 
 void MainWindowLIFU::SendInitCommand()
 {
-
+    SendCommandSystemModel();
+    OnCurrentProfileChange(nullptr, m_DataManager->m_CurrentProfileLIFU);
 }
 
 void MainWindowLIFU::SetTimerInfo()
@@ -113,6 +115,8 @@ void MainWindowLIFU::OnClickLoad()
     delete dialog;
     if(loadIndex == -1)
         return;
+    QSharedPointer<ProfileLIFU> pre = QSharedPointer<ProfileLIFU>::create();
+    pre->CopyInfo(m_DataManager->m_CurrentProfileLIFU.get());
     if(loadIndex < ConstValue::GetInstance()->DeleteLimit)
     {
         m_DataManager->m_CurrentProfileLIFU = m_DataManager->m_ProfileListLIFU[loadIndex];
@@ -136,6 +140,8 @@ void MainWindowLIFU::OnClickLoad()
         }
         m_DataManager->DeleteProfileLIFU(m_DataManager->m_ProfileListLIFU[index]);
     }
+
+    OnCurrentProfileChange(pre, m_DataManager->m_CurrentProfileLIFU);
 }
 
 void MainWindowLIFU::OnClickSave()
@@ -148,6 +154,8 @@ void MainWindowLIFU::OnClickSave()
     dialog->move(0, 0);
     dialog->exec();
     delete dialog;
+    QSharedPointer<ProfileLIFU> pre = QSharedPointer<ProfileLIFU>::create();
+    pre->CopyInfo(m_DataManager->m_CurrentProfileLIFU.get());
     QSharedPointer<ProfileLIFU> profile = QSharedPointer<ProfileLIFU>::create();
     profile->profileName = ui->lblName->text();
     profile->dutyc = ui->lblDutyc->text().toDouble();
@@ -186,6 +194,39 @@ void MainWindowLIFU::OnClickSave()
     {
         SetEditMode(false);
         OnClickCancel();
+    }
+
+    OnCurrentProfileChange(pre, m_DataManager->m_CurrentProfileLIFU);
+}
+
+void MainWindowLIFU::OnCurrentProfileChange(QSharedPointer<ProfileLIFU> prev, QSharedPointer<ProfileLIFU> curr)
+{
+    if(prev.isNull() || prev->voltage != curr->voltage)
+    {
+        SendCommandSetHvout(curr->voltage);
+    }
+    if(prev.isNull())
+    {
+        SendCommandSetChannelSwitch();
+    }
+    if(prev.isNull())
+    {
+        SendCommandSetFrequency(500);
+    }
+    QVector<uint32_t> result = GetChannelDelay();
+    SendCommandSetChannelDelay(result);
+    if(prev.isNull() || prev->period != curr->period)
+    {
+        SendCommandSetPri(curr->period);
+    }
+    if(prev.isNull())
+    {
+        SendCommandSetPD(50);
+        SendCommandSystemTriggerModel();
+    }
+    if(prev.isNull() || prev->timer != curr->timer)
+    {
+        SendCommandSetEmitTime(curr->timer);
     }
 }
 
@@ -231,4 +272,16 @@ void MainWindowLIFU::UpdateBtnState()
             ui->btnOn->setVisible(true);
         }
     }
+}
+
+QVector<uint32_t> MainWindowLIFU::GetChannelDelay()
+{
+    QVector<uint32_t> result;
+    result.fill(0, 128);
+    for(int i=0; i<m_VectorItem.size(); i++)
+    {
+        uint32_t delay = m_VectorItem[i]->GetInfo();
+        result[i] = delay;
+    }
+    return result;
 }

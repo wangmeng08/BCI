@@ -340,6 +340,7 @@ uint32_t SerialManager::Crc32(const QByteArray &payload)
 
 void SerialManager::OnHeartTimeBeat()
 {
+    return;
     uint8_t deviceAddr = 0x04;
     uint8_t commandId = 0x02;
     uint16_t len = 4;

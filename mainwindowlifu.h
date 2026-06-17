@@ -35,10 +35,13 @@ private:
     void OnClickLoad();
     void OnClickSave();
 
+    void OnCurrentProfileChange(QSharedPointer<ProfileLIFU> prev, QSharedPointer<ProfileLIFU> curr);
     void SetEditMode(bool isEdit);
 
     void UpdateBtnState() override;
 
+
+    QVector<uint32_t> GetChannelDelay();
 private:
     QVector<TXItem *> m_VectorItem;
     bool m_IsInEdit = false;
