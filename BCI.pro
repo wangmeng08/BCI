@@ -16,6 +16,7 @@ SOURCES += \
     datamanager.cpp \
     db.cpp \
     eventmanager.cpp \
+    hifupulsetrainadvance.cpp \
     logmanager.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -41,6 +42,7 @@ HEADERS += \
     db.h \
     enuminfo.h \
     eventmanager.h \
+    hifupulsetrainadvance.h \
     logmanager.h \
     mainwindow.h \
     mainwindowhifu.h \
@@ -58,6 +60,7 @@ HEADERS += \
 
 FORMS += \
     choosetype.ui \
+    hifupulsetrainadvance.ui \
     mainwindow.ui \
     mainwindowhifu.ui \
     mainwindowlifu.ui \

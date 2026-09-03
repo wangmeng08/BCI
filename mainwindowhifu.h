@@ -12,6 +12,8 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindowHIFU; }
 QT_END_NAMESPACE
 
+class HifuPulseTrainAdvance;
+
 class MainWindowHIFU : public BaseWindow
 {
     Q_OBJECT
@@ -37,6 +39,8 @@ private:
     void OnClickEdit();
     void OnClickLoad();
     void OnClickLocal();
+    void OnClickOff();
+    void OnClickOn();
     void OnClickOption();
     void OnClickSave();
 
@@ -48,6 +52,12 @@ private:
 
     void SendSetAfterSave(bool isInit=false);
 
+    void ApplyPulseTrainAdvanceToProfile(Profile *profile) const;
+    void StartPulseTrain();
+    void StopPulseTrain(bool sendStopCommand);
+    void PulseTrainTick();
+    void PulseTrainDisplayTick();
+    int PulseTrainCount() const;
     void SetAdvanceBtnState();
     void SetEditMode(bool isEdit);
 
@@ -57,6 +67,15 @@ private:
     QVector<QLineEdit *> m_VectorListDelay;
     QVector<QLineEdit *> m_VectorListFreq;
     QVector<QLineEdit *> m_VectorListHCD;
+    HifuPulseTrainAdvance *m_PulseTrainAdvance = nullptr;
+    QTimer *m_PulseTrainTimer = nullptr;
+    QTimer *m_PulseTrainDisplayTimer = nullptr;
+    int m_PulseTrainSentCount = 0;
+    int m_PulseTrainTotalCount = 0;
+    int m_PulseTrainIntervalMs = 0;
+    int m_PulseTrainPulseTimerMs = 0;
+    int m_PulseTrainRemainingMs = 0;
+    bool m_PulseTrainActive = false;
     bool m_IsInAdvance = false;
     bool m_IsInEdit = false;
     Ui::MainWindowHIFU *ui;

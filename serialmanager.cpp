@@ -98,7 +98,7 @@ QString CommandName(uint8_t commandId)
     case 0x12:
         return QStringLiteral("WR_PD");
     case 0x14:
-        return QStringLiteral("WR_TRIGGER_MODE");
+        return QStringLiteral("WR_ISPPA/WR_TRIGGER_MODE");
     case 0x18:
         return QStringLiteral("SN/EMIT_READY");
     case 0xFB:

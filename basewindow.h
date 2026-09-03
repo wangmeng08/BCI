@@ -44,6 +44,7 @@ protected:
     void SendCommandSetEmitTime(uint32_t value);
     void SendCommandSetFrequency(uint32_t value);
     void SendCommandSetHvout(double value);
+    void SendCommandSetIsppa(double value);
     void SendCommandSetPD(uint32_t value);
     void SendCommandSetPri(uint32_t value);
 

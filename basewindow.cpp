@@ -262,6 +262,17 @@ void BaseWindow::SendCommandSetHvout(double value)
                      QStringLiteral("set HVOut=%1 V").arg(value));
 }
 
+void BaseWindow::SendCommandSetIsppa(double value)
+{
+    const double ratioSPPA = 10000.0;
+    if (value < 0.0)
+        return;
+    const uint32_t encodedValue = static_cast<uint32_t>(qRound(value * ratioSPPA));
+    SendCommandData4(0x14, encodedValue,
+                     QStringLiteral("set Isppa=%1 W/cm2 encoded=%2")
+                     .arg(value).arg(encodedValue));
+}
+
 void BaseWindow::SendCommandSetPD(uint32_t value)
 {
     if (value > 100000 || value < 1)
