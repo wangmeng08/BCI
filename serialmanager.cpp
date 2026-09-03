@@ -1,5 +1,152 @@
 ﻿#include "serialmanager.h"
-#include <iostream>
+#include <algorithm>
+
+namespace {
+
+int PortPriority(const QSerialPortInfo &port)
+{
+    const QString text = QStringLiteral("%1 %2 %3 %4")
+            .arg(port.description(), port.manufacturer(),
+                 port.serialNumber(), port.portName())
+            .toLower();
+    int score = 0;
+    const QStringList positiveKeywords = {
+        QStringLiteral("usb serial"), QStringLiteral("usb-serial"),
+        QStringLiteral("usb 串行"), QStringLiteral("wch"),
+        QStringLiteral("ch340"), QStringLiteral("ch341"),
+        QStringLiteral("ftdi"), QStringLiteral("cp210"),
+        QStringLiteral("silicon labs"), QStringLiteral("prolific"),
+        QStringLiteral("uart")
+    };
+    const QStringList negativeKeywords = {
+        QStringLiteral("active management technology"),
+        QStringLiteral("amt - sol"), QStringLiteral("communications port"),
+        QStringLiteral("通信端口"), QStringLiteral("bluetooth")
+    };
+
+    for (const QString &keyword : positiveKeywords) {
+        if (text.contains(keyword))
+            score += 100;
+    }
+    for (const QString &keyword : negativeKeywords) {
+        if (text.contains(keyword))
+            score -= 200;
+    }
+    if (port.hasVendorIdentifier())
+        score += 80;
+    if (port.hasProductIdentifier())
+        score += 20;
+    if (port.description().toLower().startsWith(QStringLiteral("usb")))
+        score += 40;
+    if (port.portName().compare(QStringLiteral("COM1"), Qt::CaseInsensitive) == 0 ||
+        port.portName().compare(QStringLiteral("COM2"), Qt::CaseInsensitive) == 0) {
+        score -= 20;
+    }
+    return score;
+}
+
+QString HexByte(uint8_t value)
+{
+    return QStringLiteral("0x%1")
+            .arg(value, 2, 16, QLatin1Char('0'))
+            .toUpper();
+}
+
+QString DeviceName(uint8_t addr)
+{
+    switch (addr) {
+    case 0x01:
+        return QStringLiteral("HIFU");
+    case 0x02:
+        return QStringLiteral("LIFU");
+    case 0x03:
+        return QStringLiteral("ROM");
+    case 0x04:
+        return QStringLiteral("SYSTEM");
+    default:
+        return QStringLiteral("UNKNOWN");
+    }
+}
+
+QString CommandName(uint8_t commandId)
+{
+    switch (commandId) {
+    case 0x01:
+        return QStringLiteral("OK");
+    case 0x02:
+        return QStringLiteral("RD_STATUS");
+    case 0x03:
+        return QStringLiteral("STATUS");
+    case 0x04:
+        return QStringLiteral("WR_HVOUT/HOST_CTRL");
+    case 0x06:
+        return QStringLiteral("WR_CHANNEL_SWITCH/CLINICAL_MODE");
+    case 0x08:
+        return QStringLiteral("WR_FREQUENCY");
+    case 0x09:
+        return QStringLiteral("FREQUENCY");
+    case 0x0A:
+        return QStringLiteral("WR_CHANNEL_DELAY");
+    case 0x0C:
+        return QStringLiteral("WR_PRI");
+    case 0x0E:
+        return QStringLiteral("WR_STARTSONIC");
+    case 0x0F:
+        return QStringLiteral("WR_STOPSONIC");
+    case 0x10:
+        return QStringLiteral("WR_TIMER");
+    case 0x12:
+        return QStringLiteral("WR_PD");
+    case 0x14:
+        return QStringLiteral("WR_TRIGGER_MODE");
+    case 0x18:
+        return QStringLiteral("SN/EMIT_READY");
+    case 0xFB:
+        return QStringLiteral("FINISHED");
+    case 0xFD:
+        return QStringLiteral("ERROR");
+    default:
+        return QStringLiteral("UNKNOWN");
+    }
+}
+
+QString PacketSummary(const QByteArray &packet)
+{
+    if (packet.size() < 12)
+        return QStringLiteral("packet too short, bytes=%1")
+                .arg(packet.size());
+
+    const uint8_t index = static_cast<uint8_t>(packet[2]);
+    const uint8_t commandId = static_cast<uint8_t>(packet[3]);
+    const uint8_t addr = static_cast<uint8_t>(packet[4]);
+    const uint16_t len =
+            (static_cast<uint8_t>(packet[5]) << 8) |
+            static_cast<uint8_t>(packet[6]);
+    const QByteArray payload = packet.mid(7, len);
+
+    return QStringLiteral("packet idx=%1 cmd=%2(%3) addr=%4(%5) len=%6 data=%7")
+            .arg(index)
+            .arg(HexByte(commandId), CommandName(commandId))
+            .arg(HexByte(addr), DeviceName(addr))
+            .arg(len)
+            .arg(QString(payload.toHex(' ')).toUpper());
+}
+
+bool IsStatusPollPacket(const QByteArray &packet)
+{
+    return packet.size() >= 5 &&
+            static_cast<uint8_t>(packet[3]) == 0x02 &&
+            static_cast<uint8_t>(packet[4]) == 0x04;
+}
+
+bool IsStatusFeedbackPacket(const QByteArray &packet)
+{
+    return packet.size() >= 5 &&
+            static_cast<uint8_t>(packet[3]) == 0x03 &&
+            static_cast<uint8_t>(packet[4]) == 0x04;
+}
+
+}
 
 Q_GLOBAL_STATIC(SerialManager, serialManager);
 
@@ -17,14 +164,15 @@ SerialManager::SerialManager()
 
     m_SendTimeoutTimer = new QTimer(this);
     m_SendTimeoutTimer->setSingleShot(true);
-    m_SendTimeoutTimer->setInterval(200);
+    m_SendTimeoutTimer->setInterval(2000);
     connect(m_SendTimeoutTimer, &QTimer::timeout, this, &SerialManager::OnSendTimeout);
 
-    m_PostSendDelayTimer = new QTimer(this);
-    m_PostSendDelayTimer->setSingleShot(true);
-    m_PostSendDelayTimer->setInterval(500);
-    connect(m_PostSendDelayTimer, &QTimer::timeout, this, &SerialManager::OnPostSendDelayTimeout);
-    InitSerialPort();
+    m_InterCommandTimer = new QTimer(this);
+    m_InterCommandTimer->setSingleShot(true);
+    m_InterCommandTimer->setInterval(200);
+    connect(m_InterCommandTimer, &QTimer::timeout,
+            this, &SerialManager::OnInterCommandTimeout);
+
 }
 
 SerialManager::~SerialManager() {
@@ -38,80 +186,95 @@ SerialManager::~SerialManager() {
 
 void SerialManager::HeartTimerStart()
 {
-
+    if (m_HeartTimer && !m_HeartTimer->isActive())
+        m_HeartTimer->start();
 }
 
 void SerialManager::HeartTimerStop()
 {
-
+    if (m_HeartTimer)
+        m_HeartTimer->stop();
 }
 
 void SerialManager::SerialPortClose()
 {
-
+    HeartTimerStop();
+    m_SendTimeoutTimer->stop();
+    m_InterCommandTimer->stop();
+    m_SendQueue.clear();
+    m_Buffer.clear();
+    m_IsSending = false;
+    m_InterCommandDelaying = false;
+    m_PendingCommandIsStatusPoll = false;
+    m_PendingCommandId = 0;
+    m_PendingAddr = 0;
+    m_PendingIndex = 0;
+    if (m_SerialPort && m_SerialPort->isOpen()) {
+        m_SerialPort->close();
+        emit writeLog(QStringLiteral("Serial port closed."));
+    }
+    emit serialPortStateChanged(false);
 }
 
 void SerialManager::SerialPortOpen()
 {
-
+    if (m_SerialPort && m_SerialPort->isOpen())
+        return;
+    InitSerialPort();
 }
 
 bool SerialManager::ParseSerialData(QByteArray &packet)
 {
-    while (m_Buffer.size() >= 11)
+    static const QByteArray header = QByteArray::fromHex("5AA5");
+    while (m_Buffer.size() >= 2)
     {
-        int pos = -1;
-        for (int i = 0; i < m_Buffer.size() - 1; ++i)
-        {
-            if ((uint8_t)m_Buffer[i] == 0x5A &&
-                (uint8_t)m_Buffer[i + 1] == 0xA5)
-            {
-                pos = i;
-                break;
-            }
-        }
+        const int pos = m_Buffer.indexOf(header);
 
         if (pos < 0)
         {
-            m_Buffer.clear();
+            const bool keepHeaderPrefix =
+                    static_cast<uint8_t>(m_Buffer.back()) == 0x5A;
+            m_Buffer = keepHeaderPrefix ? QByteArray(1, char(0x5A)) : QByteArray();
             return false;
         }
 
         if (pos > 0)
             m_Buffer.remove(0, pos);
 
-        if (m_Buffer.size() < 7) return false;
+        if (m_Buffer.size() < 7)
+            return false;
 
-        uint16_t len =
-            ((uint8_t)m_Buffer[5] << 8) |
-            ((uint8_t)m_Buffer[6]);
-        if (len == 0 || len > 1024)
+        const uint16_t len =
+                (static_cast<uint8_t>(m_Buffer[5]) << 8) |
+                static_cast<uint8_t>(m_Buffer[6]);
+        if (len > 1024)
         {
             m_Buffer.remove(0, 1);
             continue;
         }
-        int totalLen = 7 + len + 4 + 1;
+        const int totalLen = 7 + len + 4 + 1;
 
         if (m_Buffer.size() < totalLen)
             return false;
-        QByteArray one = m_Buffer.left(totalLen);
+        const QByteArray one = m_Buffer.left(totalLen);
 
-        uint8_t tail = (uint8_t)one.at(totalLen - 1);
+        const uint8_t tail = static_cast<uint8_t>(one.at(totalLen - 1));
         if (tail != 0xDD)
         {
             m_Buffer.remove(0, 1);
             continue;
         }
 
-        uint32_t recvCrc =
-                ((uint8_t)one[7 + len] << 24) |
-                ((uint8_t)one[7 + len + 1] << 16) |
-                ((uint8_t)one[7 + len + 2] << 8) |
-                ((uint8_t)one[7 + len + 3]);
-        QByteArray crcRange = one.left(7 + len);
+        const uint32_t recvCrc =
+                (static_cast<uint8_t>(one[7 + len]) << 24) |
+                (static_cast<uint8_t>(one[7 + len + 1]) << 16) |
+                (static_cast<uint8_t>(one[7 + len + 2]) << 8) |
+                static_cast<uint8_t>(one[7 + len + 3]);
+        const QByteArray crcRange = one.left(7 + len);
 
         if (Crc32(crcRange) != recvCrc)
         {
+            emit writeLog(QStringLiteral("Receive CRC mismatch."));
             m_Buffer.remove(0, 1);
             continue;
         }
@@ -123,92 +286,142 @@ bool SerialManager::ParseSerialData(QByteArray &packet)
     return false;
 }
 
-bool SerialManager::ShouldDelaySend(QByteArray &packet)
-{
-    if (packet.size() < 5)
-        return false;
-    bool isNeed = false;
-    int delayTime = 500;
-    if ((uint8_t)packet[3] == 0x18 && (uint8_t)packet[4] == 0x04)
-    {
-        isNeed = true;
-        delayTime = 200;
-    }
-    else if((uint8_t)packet[3] == 0x08 && (uint8_t)packet[4] == 0x01)
-    {
-        isNeed = true;
-    }
-    if(isNeed)
-    {
-        m_PostSendDelaying = true;
-        m_PostSendDelayTimer->setInterval(delayTime);
-        m_PostSendDelayTimer->start();
-    }
-    return isNeed;
-}
-
 void SerialManager::OnSerialDataRead()
 {
+    if (!m_SerialPort)
+        return;
+
     m_Buffer.append(m_SerialPort->readAll());
     QByteArray packet;
     while (ParseSerialData(packet))
     {
         emit readSerialData(packet);
-        WriteQByteArrayLog(packet, true);
+        const bool isStatusFeedback = IsStatusFeedbackPacket(packet);
+        if (!isStatusFeedback)
+            WriteQByteArrayLog(packet, true);
+        const uint8_t commandId = static_cast<uint8_t>(packet[3]);
+        if (commandId == 0xFB)
+            emit writeLog(QStringLiteral("[MCU] emission finished feedback received"));
 
-        if (m_IsSending)
+        const uint8_t packetIndex = static_cast<uint8_t>(packet[2]);
+        if (m_IsSending && packetIndex == m_PendingIndex)
         {
             m_SendTimeoutTimer->stop();
+            if (commandId == 0xFD) {
+                emit writeLog(QStringLiteral("MCU rejected command, packet index: %1. Continue pending commands.")
+                              .arg(packetIndex));
+                emit commandRejected(m_PendingCommandId, m_PendingAddr);
+                m_IsSending = false;
+                m_PendingCommandIsStatusPoll = false;
+                m_PendingCommandId = 0;
+                m_PendingAddr = 0;
+                m_PendingIndex = 0;
+                m_InterCommandDelaying = true;
+                m_InterCommandTimer->start();
+                continue;
+            }
+            emit commandAccepted(m_PendingCommandId, m_PendingAddr);
             m_IsSending = false;
-            TrySendNext();
+            m_PendingCommandIsStatusPoll = false;
+            m_PendingCommandId = 0;
+            m_PendingAddr = 0;
+            m_PendingIndex = 0;
+            m_InterCommandDelaying = true;
+            m_InterCommandTimer->start();
+        }
+        else {
+            if (!isStatusFeedback)
+                emit writeLog(QStringLiteral("[MCU] asynchronous feedback accepted"));
         }
     }
 }
 
 void SerialManager::InitSerialPort()
 {
+    if (!m_SerialPort) {
+        m_SerialPort = new QSerialPort(this);
+        connect(m_SerialPort, &QSerialPort::readyRead,
+                this, &SerialManager::OnSerialDataRead);
+        connect(m_SerialPort, &QSerialPort::errorOccurred,
+                this, &SerialManager::OnSerialError);
+    }
+
     auto portList = QSerialPortInfo::availablePorts();
     if(portList.isEmpty())
     {
         qDebug("No available port detected.");
         emit writeLog("No available port detected.");
+        emit serialPortStateChanged(false);
         return;
     }
-    auto portName = portList.first().portName();
+    std::sort(portList.begin(), portList.end(),
+              [](const QSerialPortInfo &left, const QSerialPortInfo &right) {
+        const int leftScore = PortPriority(left);
+        const int rightScore = PortPriority(right);
+        if (leftScore != rightScore)
+            return leftScore > rightScore;
+        return left.portName() < right.portName();
+    });
+
+    const QSerialPortInfo selectedPort = portList.first();
+    const QString portName = selectedPort.portName();
     if (portName.isEmpty()) {
-        qDebug("No suitable serial port found.");
-        emit writeLog("No suitable serial port found.");
+        if (m_LastOpenError != QStringLiteral("No suitable serial port found.")) {
+            qDebug("No suitable serial port found.");
+            emit writeLog("No suitable serial port found.");
+            m_LastOpenError = QStringLiteral("No suitable serial port found.");
+        }
+        emit serialPortStateChanged(false);
         return;
     }
-    m_SerialPort = new QSerialPort(this);
     m_SerialPort->setPortName(portName);
     m_SerialPort->setBaudRate(QSerialPort::Baud115200);
     m_SerialPort->setDataBits(QSerialPort::Data8);
     m_SerialPort->setParity(QSerialPort::NoParity);
     m_SerialPort->setStopBits(QSerialPort::OneStop);
     m_SerialPort->setFlowControl(QSerialPort::NoFlowControl);
-    connect(m_SerialPort, &QSerialPort::readyRead, this, &SerialManager::OnSerialDataRead);
     if (!m_SerialPort->open(QIODevice::ReadWrite))
 	{
-        qDebug("open port failed");
-        emit writeLog("open port failed");
+        const QString error = QStringLiteral("Open serial port %1 failed: %2")
+                .arg(portName, m_SerialPort->errorString());
+        if (m_LastOpenError != error) {
+            qDebug() << error;
+            emit writeLog(error);
+            m_LastOpenError = error;
+        }
+        emit serialPortStateChanged(false);
 		return;
     }
+    m_LastOpenError.clear();
+    m_SerialPort->clear(QSerialPort::AllDirections);
     m_HeartTimer->start();
-    qDebug("InitSerialPort successful");
+    emit writeLog(QStringLiteral("Serial port opened: %1 (%2)")
+                  .arg(portName, selectedPort.description()));
+    emit serialPortStateChanged(true);
 }
 
-void SerialManager::Send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data)
+void SerialManager::Send(uint8_t cmd, uint8_t addr, uint16_t len,
+                         QByteArray data, QString description)
 {
-    if (!m_SerialPort || !m_SerialPort->isOpen())
+    if (!m_SerialPort || !m_SerialPort->isOpen()) {
+        emit writeLog(QStringLiteral("Send ignored: serial port is not open."));
         return;
-    QByteArray packet = PackPacket(cmd, addr, len, data);
-    m_SendQueue.enqueue(packet);
+    }
+    if (len != static_cast<uint16_t>(data.size())) {
+        emit writeLog(QStringLiteral("Packet length corrected from %1 to %2.")
+                      .arg(len).arg(data.size()));
+    }
+    PendingCommand command;
+    command.packet = PackPacket(
+                cmd, addr, static_cast<uint16_t>(data.size()), data);
+    command.description = description;
+    m_SendQueue.enqueue(command);
     TrySendNext();
 }
 
 void SerialManager::Test(uint8_t cmd)
 {
+    Q_UNUSED(cmd);
     emit writeLog("Test");
 }
 
@@ -216,49 +429,79 @@ void SerialManager::TrySendNext()
 {
     if (m_IsSending)
         return;
-    if (m_PostSendDelaying)
+    if (m_InterCommandDelaying)
         return;
     if (m_SendQueue.isEmpty())
         return;
     if (!m_SerialPort || !m_SerialPort->isOpen())
         return;
 
-    QByteArray packet = m_SendQueue.dequeue();
+    const PendingCommand command = m_SendQueue.dequeue();
+    const QByteArray packet = command.packet;
     m_IsSending = true;
-    m_SerialPort->write(packet);
-    WriteQByteArrayLog(packet);
-    m_SendTimeoutTimer->start();
-
-    if (packet.size() >= 5 &&
-        (uint8_t)packet[3] == 0x08 &&
-        (uint8_t)packet[4] == 0x01)
-    {
-        m_PostSendDelaying = true;
-        m_PostSendDelayTimer->start();
+    m_PendingIndex = static_cast<uint8_t>(packet[2]);
+    m_PendingCommandId = static_cast<uint8_t>(packet[3]);
+    m_PendingAddr = static_cast<uint8_t>(packet[4]);
+    m_PendingCommandIsStatusPoll = IsStatusPollPacket(packet);
+    if (!command.description.isEmpty())
+        emit writeLog(QStringLiteral("[MCU] %1").arg(command.description));
+    const qint64 bytesQueued = m_SerialPort->write(packet);
+    if (bytesQueued != packet.size()) {
+        emit writeLog(QStringLiteral("Serial write failed: %1")
+                      .arg(m_SerialPort->errorString()));
+        SerialPortClose();
+        return;
     }
+    if (!IsStatusPollPacket(packet))
+        WriteQByteArrayLog(packet);
+    m_SendTimeoutTimer->start();
 }
 
 void SerialManager::OnSendTimeout()
 {
+    emit writeLog(QStringLiteral("Serial response timeout, packet index: %1")
+                  .arg(m_PendingIndex));
+    if (m_PendingCommandIsStatusPoll) {
+        emit writeLog(QStringLiteral("Status query timeout, serial port disconnected."));
+        SerialPortClose();
+        return;
+    }
+    emit commandRejected(m_PendingCommandId, m_PendingAddr);
     m_IsSending = false;
+    m_PendingCommandIsStatusPoll = false;
+    m_PendingCommandId = 0;
+    m_PendingAddr = 0;
+    m_PendingIndex = 0;
+    m_InterCommandDelaying = true;
+    m_InterCommandTimer->start();
+    emit writeLog(QStringLiteral("Continue pending commands after timeout."));
+}
+
+void SerialManager::OnInterCommandTimeout()
+{
+    m_InterCommandDelaying = false;
     TrySendNext();
 }
 
-void SerialManager::OnPostSendDelayTimeout()
+void SerialManager::OnSerialError(QSerialPort::SerialPortError error)
 {
-    m_PostSendDelaying = false;
-     m_IsSending = false;
-    TrySendNext();
+    if (error == QSerialPort::NoError || !m_SerialPort)
+        return;
+
+    emit writeLog(QStringLiteral("Serial error: %1").arg(m_SerialPort->errorString()));
+    if (error == QSerialPort::ResourceError)
+        SerialPortClose();
 }
 
 void SerialManager::WriteQByteArrayLog(QByteArray data, bool isReceiveInfo)
 {
-
-    QString  info = "Send: ";
-    if(isReceiveInfo)
-        info = "Receive: ";
-    info = info + data.toHex(' ');
-    emit writeLog(info);
+    const QString direction = isReceiveInfo
+            ? QStringLiteral("<--")
+            : QStringLiteral("-->");
+    emit writeLog(QStringLiteral("%1 %2")
+                  .arg(direction, QString(data.toHex(' ')).toUpper()));
+    emit writeLog(QStringLiteral("%1 %2")
+                  .arg(direction, PacketSummary(data)));
 }
 
 QByteArray SerialManager::PackPacket(uint8_t cmd, uint8_t addr, uint16_t len, const QByteArray &data)
@@ -269,6 +512,8 @@ QByteArray SerialManager::PackPacket(uint8_t cmd, uint8_t addr, uint16_t len, co
     packet.append((char)0xA5);
     packet.append(m_Index);
     m_Index = (m_Index + 1) & 0xFF;
+    if (m_Index == 0)
+        m_Index = 1;
     packet.append(cmd);
     packet.append(addr);
 
@@ -340,11 +585,15 @@ uint32_t SerialManager::Crc32(const QByteArray &payload)
 
 void SerialManager::OnHeartTimeBeat()
 {
-    return;
+
+    if (m_IsSending || !m_SendQueue.isEmpty())
+        return;
+
+
     uint8_t deviceAddr = 0x04;
     uint8_t commandId = 0x02;
     uint16_t len = 4;
     QByteArray data(4, 0x00);
-    Send(commandId, deviceAddr, len, data);
+    Send(commandId, deviceAddr, len, data, QString());
 }
 

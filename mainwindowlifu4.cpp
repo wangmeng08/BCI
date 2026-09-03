@@ -5,6 +5,39 @@
 #include "savedialog.h"
 #include <QListWidgetItem>
 
+namespace {
+
+bool SameDouble(double left, double right)
+{
+    return qAbs(left - right) < 0.000001;
+}
+
+bool IsOnlyTimerChanged(const ProfileLIFU4 *profile, const ProfileLIFU4 *current)
+{
+    if (!profile || !current || profile->timer == current->timer)
+        return false;
+    if (profile->profileName != current->profileName ||
+        !SameDouble(profile->dutyc, current->dutyc) ||
+        profile->period != current->period ||
+        !SameDouble(profile->temp, current->temp) ||
+        !SameDouble(profile->voltage, current->voltage)) {
+        return false;
+    }
+    for (int i = 0; i < ProfileLIFU4::ValueCount; ++i) {
+        if (profile->values[i] != current->values[i])
+            return false;
+    }
+    return true;
+}
+
+uint32_t EncodePdUs(int periodMs, double dutyPercent)
+{
+    const double boundedDutyPercent = qBound(0.0, dutyPercent, 100.0);
+    return static_cast<uint32_t>(qRound(qMax(1, periodMs) * boundedDutyPercent * 10.0));
+}
+
+}
+
 MainWindowLIFU4::MainWindowLIFU4(QWidget *parent) :
     BaseWindow(parent),
     ui(new Ui::MainWindowLIFU)
@@ -12,7 +45,7 @@ MainWindowLIFU4::MainWindowLIFU4(QWidget *parent) :
     ui->setupUi(this);
     InitData();
     InitEvent();
-    SetConnectState(ConnectState::DISCONNECT);
+    SyncConnectStateFromSerial();
     SetEmitState(EmitState::IDLE);
 }
 
@@ -43,7 +76,34 @@ QLabel *MainWindowLIFU4::GetStateIcon()
 
 void MainWindowLIFU4::SendInitCommand()
 {
+    SendCommandSystemModel();
+    const double voltage = ui->lblVoltage->text().toDouble();
+    const double dutyCycle = ui->lblDutyc->text().toDouble();
+    const int periodMs = ui->lblPeriod->text().toInt();
+    const int timerMs = ui->lblTimer->text().toInt();
 
+    WriteCommLog(QStringLiteral(
+                     "[ON] UI parameters: DutyC=%1%%, HVOut=%2 V, "
+                     "PRI=%3 ms, Timer=%4 ms")
+                 .arg(dutyCycle).arg(voltage).arg(periodMs).arg(timerMs));
+
+    SendCommandSetHvout(voltage);
+    SendCommandSetChannelSwitch(ProfileLIFU4::ValueCount);
+
+    QVector<uint32_t> delays;
+    delays.reserve(ProfileLIFU4::ValueCount);
+    for (TXItem *item : m_VectorItem)
+        delays.append(static_cast<uint32_t>(qMax(0, item->GetInfo())));
+    WriteCommLog(QStringLiteral(
+                     "[ON] ChannelDelays count=%1, first=%2, last=%3")
+                 .arg(delays.size())
+                 .arg(delays.isEmpty() ? 0 : delays.first())
+                 .arg(delays.isEmpty() ? 0 : delays.last()));
+    //SendCommandSetChannelDelay(delays);
+
+    SendCommandSetPri(static_cast<uint32_t>(qMax(0, periodMs)));
+    SendCommandSetPD(EncodePdUs(periodMs, dutyCycle));
+    SendCommandSetEmitTime(static_cast<uint32_t>(qMax(0, timerMs)));
 }
 
 void MainWindowLIFU4::SetTimerInfo()
@@ -130,14 +190,6 @@ void MainWindowLIFU4::OnClickLoad()
 
 void MainWindowLIFU4::OnClickSave()
 {
-    int saveType = 0;
-    QString saveName = "";
-    SaveDialog *dialog = new SaveDialog(saveType, saveName, this);
-    auto size2 = this->size();
-    dialog->resize(size2);
-    dialog->move(0, 0);
-    dialog->exec();
-    delete dialog;
     QSharedPointer<ProfileLIFU4> profile = QSharedPointer<ProfileLIFU4>::create();
     profile->profileName = ui->lblName->text();
     profile->dutyc = ui->lblDutyc->text().toDouble();
@@ -149,6 +201,23 @@ void MainWindowLIFU4::OnClickSave()
     {
         profile->values[i] = m_VectorItem[i]->GetInfo();
     }
+    if (IsOnlyTimerChanged(profile.get(), m_DataManager->m_CurrentProfileLIFU4.get())) {
+        if (m_DataManager->SaveInfoToCurrentProfileLIFU4(profile)) {
+            SetEditMode(false);
+            OnClickCancel();
+            SendCommandSetEmitTime(static_cast<uint32_t>(qMax(0, profile->timer)));
+        }
+        return;
+    }
+
+    int saveType = 0;
+    QString saveName = "";
+    SaveDialog *dialog = new SaveDialog(saveType, saveName, this);
+    auto size2 = this->size();
+    dialog->resize(size2);
+    dialog->move(0, 0);
+    dialog->exec();
+    delete dialog;
     bool res = true;
     switch(saveType)
     {

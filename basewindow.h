@@ -3,6 +3,7 @@
 
 #include <QLabel>
 #include <QLineEdit>
+#include <QThread>
 #include <QTimer>
 #include <QWidget>
 #include "enuminfo.h"
@@ -32,18 +33,25 @@ protected:
     void ReadDataLIFU(QByteArray data);
     void ReadDataSystem(QByteArray data);
     void ReadSerialData(QByteArray data);
-    void Send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data);
-    void SendCommandData4(uint8_t commandId, uint32_t value);
-    void SendCommandSetChannelSwitch();
+
+    void OnCommandAccepted(uint8_t commandId, uint8_t addr);
+    void OnCommandRejected(uint8_t commandId, uint8_t addr);
+    void Send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data,
+              const QString &description = QString());
+    void SendCommandData4(uint8_t commandId, uint32_t value,
+                          const QString &description);
+
     void SendCommandSetEmitTime(uint32_t value);
     void SendCommandSetFrequency(uint32_t value);
-    void SendCommandSetHvout(uint32_t value);
+    void SendCommandSetHvout(double value);
     void SendCommandSetPD(uint32_t value);
     void SendCommandSetPri(uint32_t value);
 
+    void SendCommandSetChannelSwitch(int channelCount);
     void SendCommandSetChannelDelay(const QVector<uint32_t>& delays);
 
     void SendCommandSystemEmit();
+    void SendCommandSystemStop();
     void SendCommandSystemEmitReady();
     void SendCommandSystemHostConnectStatus(HostControlMode mode);
     void SendCommandSystemHostCheckStatus();
@@ -52,6 +60,9 @@ protected:
     void SendCommandSystemTriggerModel();
 
     void SetConnectState(ConnectState state);
+    bool IsSerialOpen() const;
+    bool IsSerialAvailable() const;
+    void SyncConnectStateFromSerial();
     void SetEmitState(EmitState state);
     void SetLineEditState(QLineEdit* edit, bool enable);
     void SetUnderline(QLineEdit* edit, bool enable);
@@ -84,12 +95,14 @@ protected:
 
     ConnectState m_ConnectState = ConnectState::DISCONNECT;
     EmitState m_State = EmitState::IDLE;
+    bool m_EmitStartPending = false;
     DataManager *m_DataManager = nullptr;
 signals:
     void heartTimerStart();
     void heartTimerStop();
 
-    void send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data);
+    void send(uint8_t cmd, uint8_t addr, uint16_t len, QByteArray data,
+              QString description);
 
     void serialPortClose();
     void serialPortOpen();

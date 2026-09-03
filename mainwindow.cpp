@@ -43,18 +43,24 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    if (logThread && logThread->isRunning()) {
+        logThread->quit();
+        logThread->wait();
+    }
     delete ui;
 }
 
 void MainWindow::InitLogManager()
 {
     LogManager *logMgr = LogManager::GetInstance();
-    logThread = new QThread();
+    logThread = new QThread(this);
     logMgr->moveToThread(logThread);
     logMgr->timer->moveToThread(logThread);
-    connect(logThread, &QThread::finished, logMgr, &QObject::deleteLater);
     logThread->start();
     connect(EventManager::GetInstance(), &EventManager::writeLog, logMgr, &LogManager::WriteLog);
+    emit EventManager::GetInstance()->writeLog(
+                LogType::INFO,
+                QStringLiteral("Log file: %1").arg(logMgr->LogFilePath()));
 }
 
 void MainWindow::TurnToPage(Page page)

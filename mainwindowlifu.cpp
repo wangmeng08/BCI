@@ -5,6 +5,39 @@
 #include "savedialog.h"
 #include <QListWidgetItem>
 
+namespace {
+
+bool SameDouble(double left, double right)
+{
+    return qAbs(left - right) < 0.000001;
+}
+
+bool IsOnlyTimerChanged(const ProfileLIFU *profile, const ProfileLIFU *current)
+{
+    if (!profile || !current || profile->timer == current->timer)
+        return false;
+    if (profile->profileName != current->profileName ||
+        !SameDouble(profile->dutyc, current->dutyc) ||
+        profile->period != current->period ||
+        !SameDouble(profile->temp, current->temp) ||
+        !SameDouble(profile->voltage, current->voltage)) {
+        return false;
+    }
+    for (int i = 0; i < ProfileLIFU::ValueCount; ++i) {
+        if (profile->values[i] != current->values[i])
+            return false;
+    }
+    return true;
+}
+
+uint32_t EncodePdUs(int periodMs, double dutyPercent)
+{
+    const double boundedDutyPercent = qBound(0.0, dutyPercent, 100.0);
+    return static_cast<uint32_t>(qRound(qMax(1, periodMs) * boundedDutyPercent * 10.0));
+}
+
+}
+
 MainWindowLIFU::MainWindowLIFU(QWidget *parent) :
     BaseWindow(parent),
     ui(new Ui::MainWindowLIFU)
@@ -12,9 +45,8 @@ MainWindowLIFU::MainWindowLIFU(QWidget *parent) :
     ui->setupUi(this);
     InitData();
     InitEvent();
-    SetConnectState(ConnectState::DISCONNECT);
+    SyncConnectStateFromSerial();
     SetEmitState(EmitState::IDLE);
-    QTimer::singleShot(1000, [=](){SendInitCommand();});
 }
 
 MainWindowLIFU::~MainWindowLIFU()
@@ -45,7 +77,35 @@ QLabel *MainWindowLIFU::GetStateIcon()
 void MainWindowLIFU::SendInitCommand()
 {
     SendCommandSystemModel();
-    OnCurrentProfileChange(nullptr, m_DataManager->m_CurrentProfileLIFU);
+    //OnCurrentProfileChange(nullptr, m_DataManager->m_CurrentProfileLIFU);
+    const double voltage = ui->lblVoltage->text().toDouble();
+    const double dutyCycle = ui->lblDutyc->text().toDouble();
+    const int periodMs = ui->lblPeriod->text().toInt();
+    const int timerMs = ui->lblTimer->text().toInt();
+
+    WriteCommLog(QStringLiteral(
+                     "[ON] UI parameters: DutyC=%1%%, HVOut=%2 V, "
+                     "PRI=%3 ms, Timer=%4 ms")
+                 .arg(dutyCycle).arg(voltage).arg(periodMs).arg(timerMs));
+
+    SendCommandSetHvout(voltage);
+    SendCommandSetChannelSwitch(ProfileLIFU::ValueCount);
+
+    QVector<uint32_t> delays;
+    delays.reserve(ProfileLIFU::ValueCount);
+    for (TXItem *item : m_VectorItem)
+        delays.append(static_cast<uint32_t>(qMax(0, item->GetInfo())));
+    WriteCommLog(QStringLiteral(
+                     "[ON] ChannelDelays count=%1, first=%2, last=%3")
+                 .arg(delays.size())
+                 .arg(delays.isEmpty() ? 0 : delays.first())
+                 .arg(delays.isEmpty() ? 0 : delays.last()));
+    //SendCommandSetChannelDelay(delays);
+
+    SendCommandSetPri(static_cast<uint32_t>(qMax(0, periodMs)));
+    SendCommandSetPD(EncodePdUs(periodMs, dutyCycle));
+    SendCommandSetEmitTime(static_cast<uint32_t>(qMax(0, timerMs)));
+
 }
 
 void MainWindowLIFU::SetTimerInfo()
@@ -146,16 +206,9 @@ void MainWindowLIFU::OnClickLoad()
 
 void MainWindowLIFU::OnClickSave()
 {
-    int saveType = 0;
-    QString saveName = "";
-    SaveDialog *dialog = new SaveDialog(saveType, saveName, this);
-    auto size2 = this->size();
-    dialog->resize(size2);
-    dialog->move(0, 0);
-    dialog->exec();
-    delete dialog;
     QSharedPointer<ProfileLIFU> pre = QSharedPointer<ProfileLIFU>::create();
     pre->CopyInfo(m_DataManager->m_CurrentProfileLIFU.get());
+
     QSharedPointer<ProfileLIFU> profile = QSharedPointer<ProfileLIFU>::create();
     profile->profileName = ui->lblName->text();
     profile->dutyc = ui->lblDutyc->text().toDouble();
@@ -167,6 +220,23 @@ void MainWindowLIFU::OnClickSave()
     {
         profile->values[i] = m_VectorItem[i]->GetInfo();
     }
+    if (IsOnlyTimerChanged(profile.get(), m_DataManager->m_CurrentProfileLIFU.get())) {
+        if (m_DataManager->SaveInfoToCurrentProfileLIFU(profile)) {
+            SetEditMode(false);
+            OnClickCancel();
+            OnCurrentProfileChange(pre, m_DataManager->m_CurrentProfileLIFU);
+        }
+        return;
+    }
+
+    int saveType = 0;
+    QString saveName = "";
+    SaveDialog *dialog = new SaveDialog(saveType, saveName, this);
+    auto size2 = this->size();
+    dialog->resize(size2);
+    dialog->move(0, 0);
+    dialog->exec();
+    delete dialog;
     bool res = true;
     switch(saveType)
     {
@@ -201,27 +271,27 @@ void MainWindowLIFU::OnClickSave()
 
 void MainWindowLIFU::OnCurrentProfileChange(QSharedPointer<ProfileLIFU> prev, QSharedPointer<ProfileLIFU> curr)
 {
+    if (curr.isNull())
+        return;
+
     if(prev.isNull() || prev->voltage != curr->voltage)
     {
         SendCommandSetHvout(curr->voltage);
     }
     if(prev.isNull())
     {
-        SendCommandSetChannelSwitch();
+        SendCommandSetChannelSwitch(ProfileLIFU::ValueCount);
     }
-    if(prev.isNull())
-    {
-        SendCommandSetFrequency(500);
-    }
-    QVector<uint32_t> result = GetChannelDelay();
-    SendCommandSetChannelDelay(result);
     if(prev.isNull() || prev->period != curr->period)
     {
         SendCommandSetPri(curr->period);
     }
+    if(prev.isNull() || prev->period != curr->period || !SameDouble(prev->dutyc, curr->dutyc))
+    {
+        SendCommandSetPD(EncodePdUs(curr->period, curr->dutyc));
+    }
     if(prev.isNull())
     {
-        SendCommandSetPD(50);
         SendCommandSystemTriggerModel();
     }
     if(prev.isNull() || prev->timer != curr->timer)

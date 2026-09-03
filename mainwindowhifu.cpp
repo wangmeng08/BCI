@@ -11,6 +11,52 @@
 
 #include <qtabbar.h>
 
+namespace {
+
+bool SameDouble(double left, double right)
+{
+    return qAbs(left - right) < 0.000001;
+}
+
+uint32_t EncodePdUs(int periodMs, int dutyPercent)
+{
+    const int boundedDutyPercent = qBound(0, dutyPercent, 100);
+    return static_cast<uint32_t>(qMax(1, periodMs) * boundedDutyPercent * 10);
+}
+
+bool IsOnlyTimerChanged(const Profile *profile, const Profile *current)
+{
+    if (!profile || !current || profile->timer == current->timer)
+        return false;
+    if (profile->profileName != current->profileName ||
+        !SameDouble(profile->isppa, current->isppa) ||
+        !SameDouble(profile->rip, current->rip) ||
+        profile->period != current->period ||
+        profile->dc != current->dc ||
+        !SameDouble(profile->depth, current->depth) ||
+        !SameDouble(profile->freq, current->freq) ||
+        !SameDouble(profile->temp, current->temp) ||
+        !SameDouble(profile->voltage, current->voltage) ||
+        !SameDouble(profile->burstLen, current->burstLen) ||
+        profile->infoList.size() != current->infoList.size()) {
+        return false;
+    }
+    for (int i = 0; i < profile->infoList.size(); ++i) {
+        const DetailInfo *left = profile->infoList[i];
+        const DetailInfo *right = current->infoList[i];
+        if (!left || !right)
+            return false;
+        if (!SameDouble(left->delay, right->delay) ||
+            !SameDouble(left->freq, right->freq) ||
+            !SameDouble(left->hcd, right->hcd)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+}
+
 MainWindowHIFU::MainWindowHIFU(QWidget *parent)
     : BaseWindow(parent)
     , ui(new Ui::MainWindowHIFU)
@@ -20,9 +66,8 @@ MainWindowHIFU::MainWindowHIFU(QWidget *parent)
 
     InitData();
     InitEvent();
-    SetConnectState(ConnectState::DISCONNECT);
+    SyncConnectStateFromSerial();
     SetEmitState(EmitState::IDLE);
-    QTimer::singleShot(1000, [=](){SendInitCommand();});
 }
 
 MainWindowHIFU::~MainWindowHIFU()
@@ -52,8 +97,44 @@ QLabel *MainWindowHIFU::GetStateIcon()
 
 void MainWindowHIFU::SendInitCommand()
 {
-    SendCommandSystemModel();
-    OnCurrentProfileChange(nullptr, m_DataManager->m_CurrentProfile);
+    SendCommandSystemHostConnectStatus(HostControlMode::REMOTE);
+    SendCommandSystemStop();
+    QSharedPointer<Profile> profile = m_DataManager->m_CurrentProfile;
+    if (profile.isNull())
+        return;
+
+    const int periodMs = qMax(1, profile->period);
+    const int dutyPercent = qBound(0, profile->dc, 100);
+    const uint32_t pdUs = EncodePdUs(periodMs, dutyPercent);
+
+    QVector<uint32_t> delays;
+    delays.reserve(profile->infoList.size());
+    for (const DetailInfo *info : qAsConst(profile->infoList)) {
+        if (!info)
+            continue;
+        delays.append(static_cast<uint32_t>(qMax(0.0, info->delay)));
+    }
+
+    WriteCommLog(QStringLiteral(
+                     "[ON] HIFU parameters: HVOut=%1 V, Frequency=%2 kHz, "
+                     "PRI=%3 ms, DC=%4%, PD=%5 us, Timer=%6 ms, "
+                     "ChannelDelays count=%7")
+                 .arg(profile->voltage)
+                 .arg(profile->freq)
+                 .arg(periodMs)
+                 .arg(dutyPercent)
+                 .arg(pdUs)
+                 .arg(profile->timer)
+                 .arg(delays.size()));
+
+    SendCommandSetHvout(profile->voltage);
+    SendCommandSetChannelSwitch(delays.size());
+    //SendCommandSetFrequency(static_cast<uint32_t>(qRound(profile->freq)));
+    //SendCommandSetChannelDelay(delays);
+    SendCommandSetPri(static_cast<uint32_t>(periodMs));
+    SendCommandSetPD(pdUs);
+    SendCommandSetEmitTime(static_cast<uint32_t>(qMax(0, profile->timer)));
+    SendCommandSystemTriggerModel();
 }
 
 void MainWindowHIFU::SetTimerInfo()
@@ -191,14 +272,6 @@ void MainWindowHIFU::OnClickOption()
 
 void MainWindowHIFU::OnClickSave()
 {
-    int saveType = 0;
-    QString saveName = "";
-    SaveDialog *dialog = new SaveDialog(saveType, saveName, this);
-    auto size2 = this->size();
-    dialog->resize(size2);
-    dialog->move(0, 0);
-    dialog->exec();
-    delete dialog;
     QSharedPointer<Profile> pre = QSharedPointer<Profile>::create();
     pre->CopyInfo(m_DataManager->m_CurrentProfile.get());
     QSharedPointer<Profile> profile = QSharedPointer<Profile>::create();
@@ -211,6 +284,7 @@ void MainWindowHIFU::OnClickSave()
     profile->freq = ui->lblFreq->text().toDouble();
     profile->temp = ui->lblTemp->text().toDouble();
     profile->voltage = ui->lblVoltage->text().toDouble();
+    profile->burstLen = ui->lblBurstLen->text().toDouble();
     if(m_IsInAdvance)
     {
         profile->profileName = ui->lblName2->text();
@@ -231,6 +305,23 @@ void MainWindowHIFU::OnClickSave()
         profile->infoList[i]->freq = m_VectorListFreq[i]->text().toDouble();
         profile->infoList[i]->hcd = m_VectorListHCD[i]->text().toDouble();
     }
+    if (IsOnlyTimerChanged(profile.get(), m_DataManager->m_CurrentProfile.get())) {
+        if (m_DataManager->SaveInfoToCurrentProfile(profile)) {
+            SetEditMode(false);
+            OnClickCancel();
+            OnCurrentProfileChange(pre, m_DataManager->m_CurrentProfile);
+        }
+        return;
+    }
+
+    int saveType = 0;
+    QString saveName = "";
+    SaveDialog *dialog = new SaveDialog(saveType, saveName, this);
+    auto size2 = this->size();
+    dialog->resize(size2);
+    dialog->move(0, 0);
+    dialog->exec();
+    delete dialog;
     bool res = true;
     switch(saveType)
     {
@@ -264,26 +355,42 @@ void MainWindowHIFU::OnClickSave()
 
 void MainWindowHIFU::OnCurrentProfileChange(QSharedPointer<Profile> prev, QSharedPointer<Profile> curr)
 {
+    if (curr.isNull())
+        return;
+
     if(prev.isNull() || prev->voltage != curr->voltage)
     {
         SendCommandSetHvout(curr->voltage);
     }
     if(prev.isNull() || prev->freq != curr->freq)
     {
-        SendCommandSetFrequency(curr->freq);
+        //SendCommandSetFrequency(static_cast<uint32_t>(qRound(curr->freq)));
     }
     if(prev.isNull() || prev->period != curr->period)
     {
         SendCommandSetPri(curr->period);
     }
-    if(prev.isNull())
+    if(prev.isNull() || prev->period != curr->period || prev->dc != curr->dc)
     {
-        SendCommandSetPD(50);
-        SendCommandSystemTriggerModel();
+        const int periodMs = qMax(1, curr->period);
+        SendCommandSetPD(EncodePdUs(periodMs, curr->dc));
     }
     if(prev.isNull() || prev->timer != curr->timer)
     {
         SendCommandSetEmitTime(curr->timer);
+    }
+    if(prev.isNull())
+    {
+        SendCommandSetChannelSwitch(curr->infoList.size());
+        QVector<uint32_t> delays;
+        delays.reserve(curr->infoList.size());
+        for (const DetailInfo *info : qAsConst(curr->infoList)) {
+            if (!info)
+                continue;
+            delays.append(static_cast<uint32_t>(qMax(0.0, info->delay)));
+        }
+        //SendCommandSetChannelDelay(delays);
+        SendCommandSystemTriggerModel();
     }
 }
 

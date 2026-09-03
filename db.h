@@ -76,7 +76,7 @@ public:
     }
     double GetIspta() const
     {
-        return isppa * dc/1000;
+        return isppa * dc / 100.0;
     }
 
     void CopyInfo(const Profile* other) {

@@ -8,6 +8,7 @@
 namespace Ui {
 class MainWindow;
 }
+class QThread;
 
 class MainWindow : public QMainWindow
 {

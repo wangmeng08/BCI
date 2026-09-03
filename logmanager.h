@@ -35,6 +35,7 @@ public:
 	~LogManager();
 	friend class TestLogManager;
     QTimer *timer;
+    QString LogFilePath() const;
 
 public slots:
     void WriteLog(LogType type, QString info);

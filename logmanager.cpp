@@ -1,6 +1,7 @@
 ﻿#include "logmanager.h"
 #include <iostream>
 #include <qdir.h>
+#include <QCoreApplication>
 
 Q_GLOBAL_STATIC(LogManager, logManager);
 
@@ -12,17 +13,19 @@ LogManager* LogManager::GetInstance()
 LogManager::LogManager()
 {
 	QString currentTime = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
-	QDir dir("logs");
-	if (dir.exists() == false)
-	{
-		dir.mkdir("../logs");
-	}
-	// 设置日志文件名为启动时的时间
-	logFile.setFileName("logs/" + currentTime + "_log.txt");
+    const QString logDirectory =
+            QCoreApplication::applicationDirPath() + QStringLiteral("/logs");
+    QDir().mkpath(logDirectory);
+    logFile.setFileName(logDirectory + QStringLiteral("/") +
+                        currentTime + QStringLiteral("_log.txt"));
 
 	// 打开日志文件（如果文件不存在则创建）
-	if (!logFile.open(QIODevice::Append | QIODevice::Text)) 
+    if (!logFile.open(QIODevice::Append | QIODevice::Text)) {
+        qDebug().noquote() << QStringLiteral("Open log file failed: %1")
+                              .arg(logFile.fileName());
 		return;
+    }
+    qDebug().noquote() << QStringLiteral("Log file: %1").arg(logFile.fileName());
 	timer = new QTimer;
 	connect(timer, &QTimer::timeout, this, &LogManager::OnTimerHandler);
 	timer->start(5000);
@@ -37,7 +40,15 @@ LogManager::~LogManager() {
 void LogManager::WriteLog(LogType type, QString info)
 {
 	QString content = GetLogContent(type, info);
-	m_LogBuffer.append(content);
+    qDebug().noquote() << content;
+    QTextStream out(&logFile);
+    out << content << "\n";
+    out.flush();
+}
+
+QString LogManager::LogFilePath() const
+{
+    return logFile.fileName();
 }
 
 void LogManager::OnTimerHandler()
