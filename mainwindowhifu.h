@@ -29,6 +29,8 @@ protected:
     QLabel *GetStateIcon() override;
     void SendInitCommand() override;
     void SetTimerInfo() override;
+    void OnSonicStarted(uint8_t addr) override;
+    void OnSonicStopped() override;
 
 private:
     void InitData();
@@ -55,6 +57,11 @@ private:
     void ApplyPulseTrainAdvanceToProfile(Profile *profile) const;
     void StartPulseTrain();
     void StopPulseTrain(bool sendStopCommand);
+    void RecordLocalTreatmentIfNeeded();
+    void RecordPulseTrainTreatmentIfNeeded(int actualTreatmentMs);
+    void OnPulseTrainStartPause();
+    void PausePulseTrain();
+    void ResumePulseTrain();
     void PulseTrainTick();
     void PulseTrainDisplayTick();
     int PulseTrainCount() const;
@@ -70,12 +77,19 @@ private:
     HifuPulseTrainAdvance *m_PulseTrainAdvance = nullptr;
     QTimer *m_PulseTrainTimer = nullptr;
     QTimer *m_PulseTrainDisplayTimer = nullptr;
+    QSharedPointer<Profile> m_PulseTrainProfile;
     int m_PulseTrainSentCount = 0;
     int m_PulseTrainTotalCount = 0;
     int m_PulseTrainIntervalMs = 0;
     int m_PulseTrainPulseTimerMs = 0;
+    int m_PulseTrainTotalDurationMs = 0;
     int m_PulseTrainRemainingMs = 0;
     bool m_PulseTrainActive = false;
+    bool m_PulseTrainPaused = false;
+    bool m_PulseTrainRecorded = false;
+    bool m_PulseTrainStarted = false;
+    bool m_LocalTreatmentStarted = false;
+    bool m_LocalTreatmentRecorded = false;
     bool m_IsInAdvance = false;
     bool m_IsInEdit = false;
     Ui::MainWindowHIFU *ui;

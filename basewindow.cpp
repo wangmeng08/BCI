@@ -125,6 +125,7 @@ void BaseWindow::InitSerialManager()
 
 void BaseWindow::OnClickOff()
 {
+    OnSonicStopped();
     m_EmitStartPending = false;
     SendCommandSystemStop();
     SetEmitState(EmitState::IDLE);
@@ -201,9 +202,12 @@ void BaseWindow::OnCommandAccepted(uint8_t commandId, uint8_t addr)
 
     if (!isVisible())
         return;
-    if (!m_EmitStartPending)
-        return;
     if (commandId != 0x0E || addr != static_cast<uint8_t>(DataType::SYSTEM_DATA))
+        return;
+
+    OnSonicStarted(addr);
+
+    if (!m_EmitStartPending)
         return;
 
     m_EmitStartPending = false;
@@ -211,6 +215,15 @@ void BaseWindow::OnCommandAccepted(uint8_t commandId, uint8_t addr)
     UpdateBtnState();
     EmitTimerStart();
 
+}
+
+void BaseWindow::OnSonicStarted(uint8_t addr)
+{
+    Q_UNUSED(addr);
+}
+
+void BaseWindow::OnSonicStopped()
+{
 }
 
 void BaseWindow::OnCommandRejected(uint8_t commandId, uint8_t addr)

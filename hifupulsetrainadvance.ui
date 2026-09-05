@@ -16,96 +16,71 @@
 }
 QLabel {
     color: rgba(255,255,255,153);
-    font-size: 36px;
+    font-size: 24px;
 }
 QLineEdit {
-    min-height: 52px;
+    min-height: 36px;
     border: none;
     background-color: transparent;
     color: rgb(255,255,255);
-    font-size: 36px;
-    padding: 0 8px;
-}
-QLineEdit:disabled {
-    color: rgb(255,255,255);
+    font-size: 26px;
+    padding: 0 4px;
 }
 QLineEdit:read-only {
     color: rgb(255,255,255);
+}
+QProgressBar {
+    min-height: 22px;
+    border: 1px solid rgba(255,255,255,120);
+    border-radius: 4px;
+    background-color: rgba(255,255,255,30);
+    color: rgb(255,255,255);
+    font-size: 16px;
+    text-align: center;
+}
+QProgressBar::chunk {
+    background-color: rgb(104, 207, 224);
+    border-radius: 3px;
+}
+QPushButton {
+    min-width: 142px;
+    min-height: 54px;
+    border: none;
+    border-radius: 10px;
+    background-color: rgb(104, 207, 224);
+    color: rgb(0, 0, 0);
+    font-size: 30px;
+}
+QPushButton:disabled {
+    background-color: rgba(104, 207, 224, 90);
+    color: rgba(0, 0, 0, 120);
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="leftMargin">
-    <number>32</number>
+   <property name="spacing">
+    <number>12</number>
    </property>
-   <property name="topMargin">
+   <property name="leftMargin">
     <number>22</number>
    </property>
+   <property name="topMargin">
+    <number>16</number>
+   </property>
    <property name="rightMargin">
-    <number>32</number>
+    <number>22</number>
    </property>
    <property name="bottomMargin">
-    <number>18</number>
+    <number>12</number>
    </property>
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <property name="horizontalSpacing">
-      <number>42</number>
+      <number>20</number>
      </property>
      <property name="verticalSpacing">
-      <number>22</number>
+      <number>10</number>
      </property>
      <item row="0" column="0">
-      <widget class="QLabel" name="labelIsppa">
-       <property name="text">
-        <string>Isppa(mW/CM2):</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLineEdit" name="editIsppa">
-       <property name="alignment">
-        <set>Qt::AlignHCenter|Qt::AlignTop</set>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLabel" name="labelIspta">
-       <property name="text">
-        <string>Ispta(W/CM2):</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="editIspta">
-       <property name="alignment">
-        <set>Qt::AlignHCenter|Qt::AlignTop</set>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="2">
-      <widget class="QLabel" name="labelPower">
-       <property name="text">
-        <string>Power(mW/CM2):</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QLineEdit" name="editPower">
-       <property name="alignment">
-        <set>Qt::AlignHCenter|Qt::AlignTop</set>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
       <widget class="QLabel" name="labelFrequency">
        <property name="text">
         <string>Frequency(kHz):</string>
@@ -115,14 +90,65 @@ QLineEdit:read-only {
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
+     <item row="1" column="0">
       <widget class="QLineEdit" name="editFrequency">
        <property name="alignment">
         <set>Qt::AlignHCenter|Qt::AlignTop</set>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="0" column="1">
+      <widget class="QLabel" name="labelIsppa">
+       <property name="text">
+        <string>Isppa(mW/CM2):</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="editIsppa">
+       <property name="alignment">
+        <set>Qt::AlignHCenter|Qt::AlignTop</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QLabel" name="labelIspta">
+       <property name="text">
+        <string>Ispta(W/CM2):</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLineEdit" name="editIspta">
+       <property name="alignment">
+        <set>Qt::AlignHCenter|Qt::AlignTop</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QLabel" name="labelPower">
+       <property name="text">
+        <string>Power(mW/CM2):</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QLineEdit" name="editPower">
+       <property name="alignment">
+        <set>Qt::AlignHCenter|Qt::AlignTop</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
       <widget class="QLabel" name="labelPri">
        <property name="text">
         <string>PRI(ms):</string>
@@ -132,8 +158,25 @@ QLineEdit:read-only {
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="3" column="0">
       <widget class="QLineEdit" name="editPri">
+       <property name="alignment">
+        <set>Qt::AlignHCenter|Qt::AlignTop</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLabel" name="labelPd">
+       <property name="text">
+        <string>PD(ms):</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="editPd">
        <property name="alignment">
         <set>Qt::AlignHCenter|Qt::AlignTop</set>
        </property>
@@ -156,58 +199,20 @@ QLineEdit:read-only {
        </property>
       </widget>
      </item>
+     <item row="2" column="3">
+      <spacer name="spacerSecondRow">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
      <item row="4" column="0">
-      <widget class="QLabel" name="labelPulseDuration">
-       <property name="text">
-        <string>Pulse Duration(ms):</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLineEdit" name="editPulseDuration">
-       <property name="alignment">
-        <set>Qt::AlignHCenter|Qt::AlignTop</set>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="1">
-      <widget class="QLabel" name="labelStimDuration">
-       <property name="text">
-        <string>Stim Duration(s):</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QLineEdit" name="editStimDuration">
-       <property name="alignment">
-        <set>Qt::AlignHCenter|Qt::AlignTop</set>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="2">
-      <widget class="QLabel" name="labelStimInterval">
-       <property name="text">
-        <string>Stim Interval(s):</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="2">
-      <widget class="QLineEdit" name="editStimInterval">
-       <property name="alignment">
-        <set>Qt::AlignHCenter|Qt::AlignTop</set>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
       <widget class="QLabel" name="labelPulseTrainDuration">
        <property name="text">
         <string>Pulse Train Duration(ms):</string>
@@ -217,10 +222,151 @@ QLineEdit:read-only {
        </property>
       </widget>
      </item>
-     <item row="7" column="0">
+     <item row="5" column="0">
       <widget class="QLineEdit" name="editPulseTrainDuration">
        <property name="alignment">
         <set>Qt::AlignHCenter|Qt::AlignTop</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLabel" name="labelStimInterval">
+       <property name="text">
+        <string>Stim Interval(s):</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QLineEdit" name="editStimInterval">
+       <property name="alignment">
+        <set>Qt::AlignHCenter|Qt::AlignTop</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="2">
+      <widget class="QLabel" name="labelStimDuration">
+       <property name="text">
+        <string>Stim Durations(s):</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="2">
+      <widget class="QLineEdit" name="editStimDuration">
+       <property name="alignment">
+        <set>Qt::AlignHCenter|Qt::AlignTop</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="3">
+      <spacer name="spacerThirdRow">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QProgressBar" name="progressTreatment">
+     <property name="minimum">
+      <number>0</number>
+     </property>
+     <property name="maximum">
+      <number>100</number>
+     </property>
+     <property name="value">
+      <number>0</number>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="controlLayout">
+     <property name="spacing">
+      <number>18</number>
+     </property>
+     <item>
+      <widget class="QPushButton" name="btnStartPause">
+       <property name="text">
+        <string>Start</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="lblElapsedTitle">
+       <property name="text">
+        <string>Elapsed:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="lblElapsedValue">
+       <property name="text">
+        <string>0.0 s</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="controlSpacerLeft">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="lblRemainingTitle">
+       <property name="text">
+        <string>Remaining:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="lblRemainingValue">
+       <property name="text">
+        <string>0.0 s</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="controlSpacerRight">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnStop">
+       <property name="text">
+        <string>Stop</string>
        </property>
       </widget>
      </item>

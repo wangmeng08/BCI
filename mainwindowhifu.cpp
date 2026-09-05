@@ -9,6 +9,7 @@
 #include "option.h"
 #include "profileload.h"
 #include "savedialog.h"
+#include "treatmentrecorder.h"
 
 #include <qtabbar.h>
 
@@ -108,31 +109,19 @@ void MainWindowHIFU::SendInitCommand()
     const int dutyPercent = qBound(0, profile->dc, 100);
     const uint32_t pdUs = EncodePdUs(periodMs, dutyPercent);
 
-    QVector<uint32_t> delays;
-    delays.reserve(profile->infoList.size());
-    for (const DetailInfo *info : qAsConst(profile->infoList)) {
-        if (!info)
-            continue;
-        delays.append(static_cast<uint32_t>(qMax(0.0, info->delay)));
-    }
-
     WriteCommLog(QStringLiteral(
-                     "[ON] HIFU parameters: HVOut=%1 V, Frequency=%2 kHz, "
-                     "PRI=%3 ms, DC=%4%, PD=%5 us, Timer=%6 ms, "
-                     "ChannelDelays count=%7")
-                 .arg(profile->voltage)
+                     "[ON] HIFU parameters: Frequency=%1 kHz, "
+                     "PRI=%2 ms, DC=%3%, PD=%4 us, Timer=%5 ms")
                  .arg(profile->freq)
                  .arg(periodMs)
                  .arg(dutyPercent)
                  .arg(pdUs)
-                 .arg(profile->timer)
-                 .arg(delays.size()));
+                 .arg(profile->timer));
 
-    SendCommandSetHvout(profile->voltage);
+    // The current HIFU firmware rejects HVOut and channel-switch writes.
+    // Keep Local On aligned with the working Advance pulse-train path.
     SendCommandSetIsppa(profile->isppa);
-    SendCommandSetChannelSwitch(delays.size());
     //SendCommandSetFrequency(static_cast<uint32_t>(qRound(profile->freq)));
-    //SendCommandSetChannelDelay(delays);
     SendCommandSetPri(static_cast<uint32_t>(periodMs));
     SendCommandSetPD(pdUs);
     SendCommandSetEmitTime(static_cast<uint32_t>(qMax(0, profile->timer)));
@@ -143,6 +132,26 @@ void MainWindowHIFU::SetTimerInfo()
 {
     ui->lblTimer->setText(QString("%1").arg(m_CurrentTime));
     ui->lblTimer2->setText(QString("%1").arg(m_CurrentTime));
+}
+
+void MainWindowHIFU::OnSonicStarted(uint8_t addr)
+{
+    Q_UNUSED(addr);
+
+    const bool isPulseTrain = m_PulseTrainActive || m_PulseTrainPaused;
+    if (isPulseTrain) {
+        m_PulseTrainStarted = true;
+        return;
+    }
+
+    m_LocalTreatmentStarted = true;
+    m_LocalTreatmentRecorded = false;
+}
+
+void MainWindowHIFU::OnSonicStopped()
+{
+    if (!m_PulseTrainActive && !m_PulseTrainPaused)
+        RecordLocalTreatmentIfNeeded();
 }
 
 void MainWindowHIFU::InitData()
@@ -188,6 +197,10 @@ void MainWindowHIFU::InitEvent()
             this, &MainWindowHIFU::PulseTrainTick);
     connect(m_PulseTrainDisplayTimer, &QTimer::timeout,
             this, &MainWindowHIFU::PulseTrainDisplayTick);
+    connect(m_PulseTrainAdvance, &HifuPulseTrainAdvance::startPauseRequested,
+            this, &MainWindowHIFU::OnPulseTrainStartPause);
+    connect(m_PulseTrainAdvance, &HifuPulseTrainAdvance::stopRequested,
+            this, &MainWindowHIFU::OnClickOff);
 
     connect(m_DataManager, &DataManager::advanceRFModeChange, this, &MainWindowHIFU::OnModeAdvanceRFChange);
     connect(m_DataManager, &DataManager::powerLimitModeChange, this, &MainWindowHIFU::OnModePowerLimitChange);
@@ -270,6 +283,8 @@ void MainWindowHIFU::OnClickLoad()
 
 void MainWindowHIFU::OnClickLocal()
 {
+    if (m_PulseTrainActive || m_PulseTrainPaused)
+        StopPulseTrain(true);
     ui->tabWidget->setCurrentIndex(0);
     m_IsInAdvance = false;
     SetAdvanceBtnState();
@@ -277,7 +292,7 @@ void MainWindowHIFU::OnClickLocal()
 
 void MainWindowHIFU::OnClickOff()
 {
-    if (m_PulseTrainActive) {
+    if (m_PulseTrainActive || m_PulseTrainPaused) {
         StopPulseTrain(true);
         return;
     }
@@ -289,6 +304,10 @@ void MainWindowHIFU::OnClickOn()
     const bool isAdvancePage = ui->tabWidget->currentIndex() == 1;
     if (isAdvancePage && m_PulseTrainAdvance) {
         m_IsInAdvance = true;
+        if (m_PulseTrainPaused) {
+            ResumePulseTrain();
+            return;
+        }
         if (m_PulseTrainActive)
             return;
         if (!IsSerialAvailable()) {
@@ -404,10 +423,6 @@ void MainWindowHIFU::OnCurrentProfileChange(QSharedPointer<Profile> prev, QShare
     if (curr.isNull())
         return;
 
-    if(prev.isNull() || prev->voltage != curr->voltage)
-    {
-        SendCommandSetHvout(curr->voltage);
-    }
     if(prev.isNull() || !SameDouble(prev->isppa, curr->isppa))
     {
         SendCommandSetIsppa(curr->isppa);
@@ -431,15 +446,6 @@ void MainWindowHIFU::OnCurrentProfileChange(QSharedPointer<Profile> prev, QShare
     }
     if(prev.isNull())
     {
-        SendCommandSetChannelSwitch(curr->infoList.size());
-        QVector<uint32_t> delays;
-        delays.reserve(curr->infoList.size());
-        for (const DetailInfo *info : qAsConst(curr->infoList)) {
-            if (!info)
-                continue;
-            delays.append(static_cast<uint32_t>(qMax(0.0, info->delay)));
-        }
-        //SendCommandSetChannelDelay(delays);
         SendCommandSystemTriggerModel();
     }
 }
@@ -490,15 +496,19 @@ void MainWindowHIFU::StartPulseTrain()
     QSharedPointer<Profile> next = QSharedPointer<Profile>::create();
     next->CopyInfo(m_DataManager->m_CurrentProfile.get());
     ApplyPulseTrainAdvanceToProfile(next.get());
-    m_DataManager->m_CurrentProfile = next;
-    OnCurrentProfileChange(prev, m_DataManager->m_CurrentProfile);
+    m_PulseTrainProfile = next;
+    OnCurrentProfileChange(prev, m_PulseTrainProfile);
 
     m_PulseTrainIntervalMs = qMax(1, qRound(m_PulseTrainAdvance->stimIntervalS() * 1000.0));
     m_PulseTrainPulseTimerMs = qMax(1, m_PulseTrainAdvance->pulseTrainDurationMs());
-    m_PulseTrainRemainingMs = qMax(1, qRound(m_PulseTrainAdvance->stimDurationS() * 1000.0));
+    m_PulseTrainTotalDurationMs = qMax(1, qRound(m_PulseTrainAdvance->stimDurationS() * 1000.0));
+    m_PulseTrainRemainingMs = m_PulseTrainTotalDurationMs;
     m_PulseTrainTotalCount = PulseTrainCount();
     m_PulseTrainSentCount = 0;
     m_PulseTrainActive = true;
+    m_PulseTrainPaused = false;
+    m_PulseTrainRecorded = false;
+    m_PulseTrainStarted = false;
     m_EmitStartPending = false;
 
     WriteCommLog(QStringLiteral(
@@ -511,8 +521,11 @@ void MainWindowHIFU::StartPulseTrain()
 
     SetEmitState(EmitState::ON);
     UpdateBtnState();
+    m_PulseTrainAdvance->SetPulseTrainRunning(true);
     m_CurrentTime = m_PulseTrainRemainingMs;
     SetTimerInfo();
+    m_PulseTrainAdvance->UpdateProgress(0, m_PulseTrainRemainingMs,
+                                        m_PulseTrainTotalDurationMs);
     m_PulseTrainDisplayTimer->start();
     m_PulseTrainTimer->setInterval(m_PulseTrainIntervalMs);
     PulseTrainTick();
@@ -526,17 +539,120 @@ void MainWindowHIFU::StopPulseTrain(bool sendStopCommand)
         m_PulseTrainTimer->stop();
     if (m_PulseTrainDisplayTimer)
         m_PulseTrainDisplayTimer->stop();
-    const bool wasActive = m_PulseTrainActive;
+    const bool hadTrain = m_PulseTrainActive || m_PulseTrainPaused;
+    const int totalMs = qMax(0, m_PulseTrainTotalDurationMs);
+    const int remainingMs = qBound(0, m_PulseTrainRemainingMs, totalMs);
+    const int elapsedMs = qMax(0, totalMs - remainingMs);
     m_PulseTrainActive = false;
-    m_PulseTrainRemainingMs = 0;
-    m_CurrentTime = 0;
+    m_PulseTrainPaused = false;
+    RecordPulseTrainTreatmentIfNeeded(elapsedMs);
+    m_PulseTrainStarted = false;
+    m_CurrentTime = remainingMs;
     SetTimerInfo();
+    if (m_PulseTrainAdvance)
+        m_PulseTrainAdvance->ResetProgress();
     SetEmitState(EmitState::IDLE);
     UpdateBtnState();
+    if (m_PulseTrainAdvance)
+        m_PulseTrainAdvance->SetPulseTrainRunning(false);
     if (sendStopCommand)
         SendCommandSystemStop();
-    if (wasActive)
+    if (hadTrain)
         WriteCommLog(QStringLiteral("[PULSE TRAIN] stop"));
+}
+
+void MainWindowHIFU::RecordLocalTreatmentIfNeeded()
+{
+    if (!m_LocalTreatmentStarted || m_LocalTreatmentRecorded)
+        return;
+
+    const Profile *profile = m_DataManager->m_CurrentProfile.get();
+    if (!profile)
+        return;
+
+    const int plannedMs = qMax(0, profile->timer);
+    const int actualMs = qBound(0, plannedMs - m_CurrentTime, plannedMs);
+    TreatmentRecorder::GetInstance()->RecordHifuTreatment(
+                m_DataManager->m_CurrentPatient.get(),
+                profile,
+                QStringLiteral("Local"),
+                actualMs,
+                1);
+    m_LocalTreatmentRecorded = true;
+    m_LocalTreatmentStarted = false;
+}
+
+void MainWindowHIFU::RecordPulseTrainTreatmentIfNeeded(int actualTreatmentMs)
+{
+    if (!m_PulseTrainStarted || m_PulseTrainRecorded)
+        return;
+
+    const Profile *profile = m_PulseTrainProfile.isNull()
+            ? m_DataManager->m_CurrentProfile.get()
+            : m_PulseTrainProfile.get();
+    TreatmentRecorder::GetInstance()->RecordHifuTreatment(
+                m_DataManager->m_CurrentPatient.get(),
+                profile,
+                QStringLiteral("Advance"),
+                qMax(0, actualTreatmentMs),
+                qMax(1, m_PulseTrainSentCount),
+                m_PulseTrainPulseTimerMs,
+                m_PulseTrainIntervalMs,
+                m_PulseTrainTotalDurationMs);
+    m_PulseTrainRecorded = true;
+}
+
+void MainWindowHIFU::OnPulseTrainStartPause()
+{
+    if (m_PulseTrainActive) {
+        PausePulseTrain();
+        return;
+    }
+    if (m_PulseTrainPaused) {
+        ResumePulseTrain();
+        return;
+    }
+    OnClickOn();
+}
+
+void MainWindowHIFU::PausePulseTrain()
+{
+    if (!m_PulseTrainActive)
+        return;
+
+    if (m_PulseTrainTimer)
+        m_PulseTrainTimer->stop();
+    if (m_PulseTrainDisplayTimer)
+        m_PulseTrainDisplayTimer->stop();
+    m_PulseTrainActive = false;
+    m_PulseTrainPaused = true;
+    SetEmitState(EmitState::IDLE);
+    UpdateBtnState();
+    if (m_PulseTrainAdvance)
+        m_PulseTrainAdvance->SetPulseTrainRunning(false, true);
+    SendCommandSystemStop();
+    WriteCommLog(QStringLiteral("[PULSE TRAIN] pause"));
+}
+
+void MainWindowHIFU::ResumePulseTrain()
+{
+    if (!m_PulseTrainPaused || m_PulseTrainRemainingMs <= 0)
+        return;
+
+    m_PulseTrainPaused = false;
+    m_PulseTrainActive = true;
+    SetEmitState(EmitState::ON);
+    UpdateBtnState();
+    if (m_PulseTrainAdvance)
+        m_PulseTrainAdvance->SetPulseTrainRunning(true);
+    if (m_PulseTrainDisplayTimer)
+        m_PulseTrainDisplayTimer->start();
+    if (m_PulseTrainTimer)
+        m_PulseTrainTimer->setInterval(m_PulseTrainIntervalMs);
+    PulseTrainTick();
+    if (m_PulseTrainActive && m_PulseTrainTimer)
+        m_PulseTrainTimer->start();
+    WriteCommLog(QStringLiteral("[PULSE TRAIN] resume"));
 }
 
 void MainWindowHIFU::PulseTrainTick()
@@ -568,6 +684,11 @@ void MainWindowHIFU::PulseTrainDisplayTick()
     m_PulseTrainRemainingMs = qMax(0, m_PulseTrainRemainingMs - m_timerIntervalMs);
     m_CurrentTime = m_PulseTrainRemainingMs;
     SetTimerInfo();
+    if (m_PulseTrainAdvance) {
+        const int elapsedMs = qMax(0, m_PulseTrainTotalDurationMs - m_PulseTrainRemainingMs);
+        m_PulseTrainAdvance->UpdateProgress(elapsedMs, m_PulseTrainRemainingMs,
+                                            m_PulseTrainTotalDurationMs);
+    }
     if (m_PulseTrainRemainingMs <= 0)
         StopPulseTrain(true);
 }

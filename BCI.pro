@@ -31,6 +31,7 @@ SOURCES += \
     reportitem.cpp \
     savedialog.cpp \
     serialmanager.cpp \
+    treatmentrecorder.cpp \
     txitem.cpp
 
 HEADERS += \
@@ -56,6 +57,7 @@ HEADERS += \
     reportitem.h \
     savedialog.h \
     serialmanager.h \
+    treatmentrecorder.h \
     txitem.h
 
 FORMS += \

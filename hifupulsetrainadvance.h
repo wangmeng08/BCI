@@ -18,6 +18,9 @@ public:
 
     void LoadFromProfile(const Profile *profile);
     void SetEditMode(bool enabled);
+    void ResetProgress();
+    void UpdateProgress(int elapsedMs, int remainingMs, int totalMs);
+    void SetPulseTrainRunning(bool running, bool paused = false);
 
     double isppa() const;
     double frequencyKhz() const;
@@ -28,6 +31,10 @@ public:
     double stimDurationS() const;
     double stimIntervalS() const;
 
+signals:
+    void startPauseRequested();
+    void stopRequested();
+
 private:
     void InitUiState();
     void UpdateDerivedValues();
@@ -36,6 +43,7 @@ private:
 
 private:
     Ui::HifuPulseTrainAdvance *ui;
+    double m_Rip = 1.0;
 };
 
 #endif // HIFUPULSETRAINADVANCE_H
