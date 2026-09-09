@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QSqlRecord>
 #include <QStandardPaths>
 #include <QVariant>
 #include <iostream>
@@ -128,7 +129,9 @@ void DB::CreateTableProfile()
                     "delay3 REAL NOT NULL, "
                     "hcd4 REAL NOT NULL, "
                     "freq4 REAL NOT NULL, "
-                    "delay4 REAL NOT NULL)";
+                    "delay4 REAL NOT NULL, "
+                    "stim_duration_ms INTEGER NOT NULL DEFAULT 150000, "
+                    "stim_interval_ms INTEGER NOT NULL DEFAULT 700)";
     bool success = query.exec(sql);
     if (!success)
     {
@@ -136,6 +139,20 @@ void DB::CreateTableProfile()
         QString info = QString("create table profile error: %1").arg(query.lastError().text());
         WriteLog(info);
     }
+
+    QSqlRecord record = db.record(QStringLiteral("profiles"));
+    if (!record.contains(QStringLiteral("stim_duration_ms"))) {
+        query.exec(QStringLiteral(
+                       "ALTER TABLE profiles ADD COLUMN "
+                       "stim_duration_ms INTEGER NOT NULL DEFAULT 150000"));
+    }
+    record = db.record(QStringLiteral("profiles"));
+    if (!record.contains(QStringLiteral("stim_interval_ms"))) {
+        query.exec(QStringLiteral(
+                       "ALTER TABLE profiles ADD COLUMN "
+                       "stim_interval_ms INTEGER NOT NULL DEFAULT 700"));
+    }
+    query.exec(QStringLiteral("UPDATE profiles SET rip = 2.5 WHERE rip <= 1.0"));
 }
 
 void DB::CreateTablePatient()
@@ -250,11 +267,14 @@ bool DB::ProfileCreate(QSharedPointer<Profile> profile, bool isDefault)
 
     query.prepare(R"(
         INSERT INTO profiles
-        (profile_name, isppa, rip, period, dc, timer, depth, freq, temp, voltage, burstLen, hcd1, freq1, delay1, hcd2, freq2, delay2, hcd3,
-             freq3, delay3, hcd4, freq4, delay4)
+        (profile_name, isppa, rip, period, dc, timer, depth, freq, temp,
+         voltage, burstLen, hcd1, freq1, delay1, hcd2, freq2, delay2, hcd3,
+         freq3, delay3, hcd4, freq4, delay4, stim_duration_ms, stim_interval_ms)
         VALUES
-        (:profile_name, :isppa, :rip, :period, :dc, :timer, :depth, :freq, :temp, :voltage, :burstLen, :hcd1, :freq1, :delay1, :hcd2, :freq2,
-            :delay2, :hcd3, :freq3, :delay3, :hcd4, :freq4, :delay4)
+        (:profile_name, :isppa, :rip, :period, :dc, :timer, :depth, :freq,
+         :temp, :voltage, :burstLen, :hcd1, :freq1, :delay1, :hcd2, :freq2,
+         :delay2, :hcd3, :freq3, :delay3, :hcd4, :freq4, :delay4,
+         :stim_duration_ms, :stim_interval_ms)
     )");
 
     query.bindValue(":profile_name", profile->profileName);
@@ -280,6 +300,8 @@ bool DB::ProfileCreate(QSharedPointer<Profile> profile, bool isDefault)
     query.bindValue(":hcd4",       profile->infoList[3]->hcd);
     query.bindValue(":freq4",      profile->infoList[3]->freq);
     query.bindValue(":delay4",     profile->infoList[3]->delay);
+    query.bindValue(":stim_duration_ms", profile->stimDurationMs);
+    query.bindValue(":stim_interval_ms", profile->stimIntervalMs);
 
     bool success = query.exec();
     QString logInfo = QString("INSERT into profiles set %1").arg(profile->GetInfo());
@@ -479,7 +501,9 @@ bool DB::ProfileModifyInfo(QSharedPointer<Profile> profile, QSharedPointer<Profi
             delay3      = :delay3,
             hcd4        = :hcd4,
             freq4       = :freq4,
-            delay4      = :delay4
+            delay4      = :delay4,
+            stim_duration_ms = :stim_duration_ms,
+            stim_interval_ms = :stim_interval_ms
         WHERE id = :indexId
     )");
 
@@ -506,6 +530,8 @@ bool DB::ProfileModifyInfo(QSharedPointer<Profile> profile, QSharedPointer<Profi
     query.bindValue(":hcd4",       profile->infoList[3]->hcd);
     query.bindValue(":freq4",      profile->infoList[3]->freq);
     query.bindValue(":delay4",     profile->infoList[3]->delay);
+    query.bindValue(":stim_duration_ms", profile->stimDurationMs);
+    query.bindValue(":stim_interval_ms", profile->stimIntervalMs);
     query.bindValue(":indexId",    targetProfile->indexId);
     bool success = query.exec();
     QString logInfo = QString("UPDATE profiles set %1, where index = %2").arg(profile->GetInfo()).arg(targetProfile->indexId);
@@ -719,6 +745,8 @@ void DB::ProfileGetAllInfo(QVector<QSharedPointer<Profile>> &profileList)
         profile->profileName = query.value("profile_name").toString();
         profile->isppa = query.value("isppa").toDouble();
         profile->rip = query.value("rip").toDouble();
+        if (profile->rip <= 1.0)
+            profile->rip = 2.5;
         profile->depth = query.value("depth").toDouble();
         profile->freq = query.value("freq").toDouble();
         profile->temp = query.value("temp").toDouble();
@@ -727,6 +755,8 @@ void DB::ProfileGetAllInfo(QVector<QSharedPointer<Profile>> &profileList)
         profile->timer = query.value("timer").toInt();
         profile->dc = query.value("dc").toInt();
         profile->burstLen = query.value("burstLen").toDouble();
+        profile->stimDurationMs = query.value("stim_duration_ms").toInt();
+        profile->stimIntervalMs = query.value("stim_interval_ms").toInt();
         for(int i=0; i<4; i++)
         {
             profile->infoList[i]->hcd = query.value(QString("hcd%1").arg(i+1)).toDouble();

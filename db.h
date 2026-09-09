@@ -51,11 +51,13 @@ public:
 class Profile : public BaseProfile{
 public:
     double isppa = 10;
-    double rip = 1;
+    double rip = 2.5;
     int dc = 50;
     double depth = 2;
     double freq = 500;
     double burstLen = 5;
+    int stimDurationMs = 150000;
+    int stimIntervalMs = 700;
     QVector<DetailInfo *> infoList;
     Profile(){
         for(int i=1; i<=4; i++)
@@ -93,6 +95,8 @@ public:
         temp = other->temp;
         voltage = other->voltage;
         burstLen = other->burstLen;
+        stimDurationMs = other->stimDurationMs;
+        stimIntervalMs = other->stimIntervalMs;
 
         qDeleteAll(infoList);
         infoList.clear();
@@ -105,7 +109,8 @@ public:
     {
         QString infoStr = QString(
                     "ProfileName: %1, IndexId: %2, Isppa: %3, Period: %4, DC: %5, "
-                    "Timer: %6, Depth: %7, Freq: %8, Temp: %9, Voltage: %10, BurstLen: %11\n"
+                    "Timer: %6, Depth: %7, Freq: %8, Temp: %9, Voltage: %10, "
+                    "BurstLen: %11, StimDurationMs: %12, StimIntervalMs: %13\n"
                 ).arg(profileName)
                  .arg(indexId)
                  .arg(isppa)
@@ -116,7 +121,9 @@ public:
                  .arg(freq)
                  .arg(temp)
                  .arg(voltage)
-                 .arg(burstLen);
+                 .arg(burstLen)
+                 .arg(stimDurationMs)
+                 .arg(stimIntervalMs);
 
         infoStr += "DetailInfo List:\n";
         for (const auto &detail : infoList) {

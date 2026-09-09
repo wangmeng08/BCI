@@ -12,6 +12,8 @@
 #include "treatmentrecorder.h"
 
 #include <qtabbar.h>
+#include <QGridLayout>
+#include <QLabel>
 
 namespace {
 
@@ -40,6 +42,8 @@ bool IsOnlyTimerChanged(const Profile *profile, const Profile *current)
         !SameDouble(profile->temp, current->temp) ||
         !SameDouble(profile->voltage, current->voltage) ||
         !SameDouble(profile->burstLen, current->burstLen) ||
+        profile->stimDurationMs != current->stimDurationMs ||
+        profile->stimIntervalMs != current->stimIntervalMs ||
         profile->infoList.size() != current->infoList.size()) {
         return false;
     }
@@ -99,8 +103,6 @@ QLabel *MainWindowHIFU::GetStateIcon()
 
 void MainWindowHIFU::SendInitCommand()
 {
-    SendCommandSystemHostConnectStatus(HostControlMode::REMOTE);
-    SendCommandSystemStop();
     QSharedPointer<Profile> profile = m_DataManager->m_CurrentProfile;
     if (profile.isNull())
         return;
@@ -125,13 +127,24 @@ void MainWindowHIFU::SendInitCommand()
     SendCommandSetPri(static_cast<uint32_t>(periodMs));
     SendCommandSetPD(pdUs);
     SendCommandSetEmitTime(static_cast<uint32_t>(qMax(0, profile->timer)));
-    SendCommandSystemTriggerModel();
 }
 
 void MainWindowHIFU::SetTimerInfo()
 {
     ui->lblTimer->setText(QString("%1").arg(m_CurrentTime));
     ui->lblTimer2->setText(QString("%1").arg(m_CurrentTime));
+}
+
+void MainWindowHIFU::OnEmitTimerExpired()
+{
+    if (m_PulseTrainActive || m_PulseTrainPaused) {
+        SetTimerInfo();
+        return;
+    }
+
+    const int savedTimer = m_DataManager->GetEmitTime();
+    ui->lblTimer->setText(QString("%1").arg(savedTimer));
+    ui->lblTimer2->setText(QString("%1").arg(savedTimer));
 }
 
 void MainWindowHIFU::OnSonicStarted(uint8_t addr)
@@ -148,16 +161,34 @@ void MainWindowHIFU::OnSonicStarted(uint8_t addr)
     m_LocalTreatmentRecorded = false;
 }
 
+void MainWindowHIFU::OnSonicFinished()
+{
+    if (m_PulseTrainActive || m_PulseTrainPaused)
+        return;
+
+    RecordLocalTreatmentIfNeeded();
+    m_EmitStartPending = false;
+    SetEmitState(EmitState::IDLE);
+    UpdateBtnState();
+    EmitTimerStop();
+    m_CurrentTime = m_DataManager->GetEmitTime();
+    SetTimerInfo();
+}
+
 void MainWindowHIFU::OnSonicStopped()
 {
-    if (!m_PulseTrainActive && !m_PulseTrainPaused)
+    if (!m_PulseTrainActive && !m_PulseTrainPaused) {
         RecordLocalTreatmentIfNeeded();
+        m_CurrentTime = m_DataManager->GetEmitTime();
+        SetTimerInfo();
+    }
 }
 
 void MainWindowHIFU::InitData()
 {
     ui->tabWidget->tabBar()->hide();
     ui->tabWidget->setCurrentIndex(0);
+    RebuildLocalLayout();
     m_VectorListDelay.append(ui->lblDelay1);
     m_VectorListDelay.append(ui->lblDelay2);
     m_VectorListDelay.append(ui->lblDelay3);
@@ -193,6 +224,12 @@ void MainWindowHIFU::InitEvent()
     connect(ui->btnOn, &QPushButton::clicked, this, &MainWindowHIFU::OnClickOn);
     connect(ui->btnOption, &QPushButton::clicked, this, &MainWindowHIFU::OnClickOption);
     connect(ui->btnSave, &QPushButton::clicked, this, &MainWindowHIFU::OnClickSave);
+    connect(ui->lblPeriod, &QLineEdit::editingFinished,
+            this, &MainWindowHIFU::UpdateLocalDerivedValues);
+    connect(ui->lblDC, &QLineEdit::editingFinished,
+            this, &MainWindowHIFU::UpdateLocalDerivedValues);
+    connect(ui->lblIsppa, &QLineEdit::editingFinished,
+            this, &MainWindowHIFU::UpdateLocalDerivedValues);
     connect(m_PulseTrainTimer, &QTimer::timeout,
             this, &MainWindowHIFU::PulseTrainTick);
     connect(m_PulseTrainDisplayTimer, &QTimer::timeout,
@@ -233,6 +270,7 @@ void MainWindowHIFU::OnClickCancel()
     ui->lblName->setText(m_DataManager->m_CurrentProfile->profileName);
     ui->lblName2->setText(m_DataManager->m_CurrentProfile->profileName);
     ui->lblBurstLen->setText(QString("%1").arg(m_DataManager->m_CurrentProfile->burstLen));
+    UpdateLocalDerivedValues();
     for(int i=0; i<4; i++)
     {
         m_VectorListDelay[i]->setText(QString("%1").arg(m_DataManager->m_CurrentProfile->infoList[i]->delay));
@@ -287,6 +325,7 @@ void MainWindowHIFU::OnClickLocal()
         StopPulseTrain(true);
     ui->tabWidget->setCurrentIndex(0);
     m_IsInAdvance = false;
+    OnClickCancel();
     SetAdvanceBtnState();
 }
 
@@ -343,6 +382,7 @@ void MainWindowHIFU::OnClickSave()
     QSharedPointer<Profile> pre = QSharedPointer<Profile>::create();
     pre->CopyInfo(m_DataManager->m_CurrentProfile.get());
     QSharedPointer<Profile> profile = QSharedPointer<Profile>::create();
+    profile->CopyInfo(m_DataManager->m_CurrentProfile.get());
     profile->profileName = ui->lblName->text();
     profile->isppa = ui->lblIsppa->text().toDouble();
     profile->period = ui->lblPeriod->text().toInt();
@@ -457,9 +497,9 @@ void MainWindowHIFU::OnModeAdvanceRFChange()
 void MainWindowHIFU::OnModePowerLimitChange()
 {
     ui->lblWarning->setVisible(!m_DataManager->m_IsUsePowerLimit);
-    QString qss = "color:red";
-    if(m_DataManager->m_IsUsePowerLimit)
-        qss = "";
+    const QString qss = m_DataManager->m_IsUsePowerLimit
+            ? QStringLiteral("color: rgb(255,255,255); font-size: 26px; background: transparent; border: none;")
+            : QStringLiteral("color: red; font-size: 26px; background: transparent; border: none;");
     ui->lblPower->setStyleSheet(qss);
     ui->lblIsppa->setStyleSheet(qss);
     ui->lblIspta->setStyleSheet(qss);
@@ -487,6 +527,8 @@ void MainWindowHIFU::ApplyPulseTrainAdvanceToProfile(Profile *profile) const
     profile->dc = m_PulseTrainAdvance->dutyCyclePercent();
     profile->timer = m_PulseTrainAdvance->pulseTrainDurationMs();
     profile->burstLen = m_PulseTrainAdvance->pulseDurationMs();
+    profile->stimDurationMs = qMax(0, qRound(m_PulseTrainAdvance->stimDurationS() * 1000.0));
+    profile->stimIntervalMs = qMax(0, qRound(m_PulseTrainAdvance->stimIntervalS() * 1000.0));
 }
 
 void MainWindowHIFU::StartPulseTrain()
@@ -499,9 +541,9 @@ void MainWindowHIFU::StartPulseTrain()
     m_PulseTrainProfile = next;
     OnCurrentProfileChange(prev, m_PulseTrainProfile);
 
-    m_PulseTrainIntervalMs = qMax(1, qRound(m_PulseTrainAdvance->stimIntervalS() * 1000.0));
+    m_PulseTrainIntervalMs = qMax(1, m_PulseTrainProfile->stimIntervalMs);
     m_PulseTrainPulseTimerMs = qMax(1, m_PulseTrainAdvance->pulseTrainDurationMs());
-    m_PulseTrainTotalDurationMs = qMax(1, qRound(m_PulseTrainAdvance->stimDurationS() * 1000.0));
+    m_PulseTrainTotalDurationMs = qMax(1, m_PulseTrainProfile->stimDurationMs);
     m_PulseTrainRemainingMs = m_PulseTrainTotalDurationMs;
     m_PulseTrainTotalCount = PulseTrainCount();
     m_PulseTrainSentCount = 0;
@@ -698,12 +740,119 @@ int MainWindowHIFU::PulseTrainCount() const
     if (!m_PulseTrainAdvance)
         return 1;
 
-    const int stimDurationMs = qMax(1, qRound(m_PulseTrainAdvance->stimDurationS() * 1000.0));
-    const int intervalMs = qMax(1, qRound(m_PulseTrainAdvance->stimIntervalS() * 1000.0));
+    const int stimDurationMs = m_PulseTrainProfile.isNull()
+            ? qMax(1, qRound(m_PulseTrainAdvance->stimDurationS() * 1000.0))
+            : qMax(1, m_PulseTrainProfile->stimDurationMs);
+    const int intervalMs = m_PulseTrainProfile.isNull()
+            ? qMax(1, qRound(m_PulseTrainAdvance->stimIntervalS() * 1000.0))
+            : qMax(1, m_PulseTrainProfile->stimIntervalMs);
     const int pulseTimerMs = qMax(1, m_PulseTrainAdvance->pulseTrainDurationMs());
     if (stimDurationMs <= pulseTimerMs)
         return 1;
     return ((stimDurationMs - pulseTimerMs) / intervalMs) + 1;
+}
+
+void MainWindowHIFU::RebuildLocalLayout()
+{
+    QGridLayout *layout = ui->gridLayout;
+    while (QLayoutItem *item = layout->takeAt(0))
+        delete item;
+
+    if (!m_LocalPdTitle)
+        m_LocalPdTitle = new QLabel(this);
+    if (!m_LocalPdValue)
+        m_LocalPdValue = new QLabel(this);
+
+    ui->label_2->setText(QStringLiteral("Freq(kHz):"));
+    ui->label_12->setTextFormat(Qt::RichText);
+    ui->label_5->setTextFormat(Qt::RichText);
+    ui->label_12->setText(QStringLiteral("Isppa(W/cm<sup>2</sup>):"));
+    ui->label_5->setText(QStringLiteral("Ispta(W/cm<sup>2</sup>):"));
+    ui->label->setText(QStringLiteral("Power(W):"));
+    ui->label_4->setText(QStringLiteral("XDC:"));
+    ui->label_11->setText(QStringLiteral("Depth(mm):"));
+    ui->label_9->setText(QStringLiteral("Voltage(V):"));
+    ui->label_3->setText(QStringLiteral("Temp(C):"));
+    ui->label_15->setText(QStringLiteral("PRI(ms):"));
+    m_LocalPdTitle->setText(QStringLiteral("PD(ms):"));
+    ui->label_14->setText(QStringLiteral("DC(%):"));
+    ui->label_8->setText(QStringLiteral("Profile:"));
+    ui->label_13->setText(QStringLiteral("Timer(ms):"));
+
+    const QString labelStyle = QStringLiteral("color: rgba(255,255,255,153); font-size: 24px;");
+    const QString valueStyle = QStringLiteral("color: rgb(255,255,255); font-size: 26px; background: transparent; border: none;");
+    const QFont labelFont(QStringLiteral("Alibaba PuHuiTi 2.0 55 Regular"), 24);
+    const QFont valueFont(QStringLiteral("Alibaba PuHuiTi 2.0 55 Regular"), 26);
+    const QList<QLabel *> labels = {
+        ui->label_2, ui->label_12, ui->label_5, ui->label,
+        ui->label_4, ui->label_11, ui->label_9, ui->label_3,
+        ui->label_15, m_LocalPdTitle, ui->label_14, ui->label_8,
+        ui->label_13
+    };
+    for (QLabel *label : labels) {
+        label->setFont(labelFont);
+        label->setStyleSheet(labelStyle);
+        label->setAlignment(Qt::AlignBottom | Qt::AlignHCenter);
+    }
+
+    const QList<QWidget *> values = {
+        ui->lblFreq, ui->lblIsppa, ui->lblIspta, ui->lblPower,
+        ui->label_6, ui->lblDepth, ui->lblVoltage, ui->lblTemp,
+        ui->lblPeriod, m_LocalPdValue, ui->lblDC, ui->lblName,
+        ui->lblTimer
+    };
+    for (QWidget *value : values) {
+        value->setFont(valueFont);
+        value->setStyleSheet(valueStyle);
+        if (QLabel *label = qobject_cast<QLabel *>(value))
+            label->setAlignment(Qt::AlignCenter);
+        if (QLineEdit *edit = qobject_cast<QLineEdit *>(value)) {
+            edit->setMinimumHeight(36);
+            edit->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
+        }
+    }
+
+    auto addField = [layout](int fieldRow, int column, QWidget *title, QWidget *value) {
+        const int row = fieldRow * 2;
+        layout->addWidget(title, row, column);
+        layout->addWidget(value, row + 1, column);
+    };
+
+    addField(0, 0, ui->label_2, ui->lblFreq);
+    addField(0, 1, ui->label_12, ui->lblIsppa);
+    addField(0, 2, ui->label_5, ui->lblIspta);
+    addField(0, 3, ui->label, ui->lblPower);
+    addField(1, 0, ui->label_4, ui->label_6);
+    addField(1, 1, ui->label_11, ui->lblDepth);
+    addField(1, 2, ui->label_9, ui->lblVoltage);
+    addField(1, 3, ui->label_3, ui->lblTemp);
+    addField(2, 0, ui->label_15, ui->lblPeriod);
+    addField(2, 1, m_LocalPdTitle, m_LocalPdValue);
+    addField(2, 2, ui->label_14, ui->lblDC);
+    addField(2, 3, ui->label_8, ui->lblName);
+    addField(3, 0, ui->label_13, ui->lblTimer);
+
+    layout->setContentsMargins(22, 16, 22, 12);
+    layout->setHorizontalSpacing(20);
+    layout->setVerticalSpacing(10);
+    for (int column = 0; column < 4; ++column)
+        layout->setColumnStretch(column, 1);
+}
+
+void MainWindowHIFU::UpdateLocalDerivedValues()
+{
+    if (!m_LocalPdValue)
+        return;
+    const double isppa = ui->lblIsppa->text().toDouble();
+    const double priMs = ui->lblPeriod->text().toDouble();
+    const double dutyPercent = ui->lblDC->text().toDouble();
+    const double pdMs = priMs * dutyPercent / 100.0;
+    const double rip = m_DataManager->m_CurrentProfile.isNull()
+            ? 2.5
+            : qMax(0.000001, m_DataManager->m_CurrentProfile->rip);
+    ui->lblIspta->setText(QString::number(isppa * dutyPercent / 100.0, 'f', 2));
+    ui->lblPower->setText(QString::number(isppa / rip, 'f', 1));
+    m_LocalPdValue->setText(QString::number(pdMs, 'f', 1));
 }
 
 void MainWindowHIFU::SetAdvanceBtnState()
@@ -736,6 +885,22 @@ void MainWindowHIFU::SetEditMode(bool isEdit)
     }
     if (m_PulseTrainAdvance)
         m_PulseTrainAdvance->SetEditMode(isEdit);
+
+    const QString editStyle = QStringLiteral(
+                "color: rgb(111,217,236); font-size: 26px; "
+                "background: transparent; border: none;");
+    const QString viewStyle = QStringLiteral(
+                "color: rgb(255,255,255); font-size: 26px; "
+                "background: transparent; border: none;");
+    const QList<QLineEdit *> localEditableFields = {
+        ui->lblDepth, ui->lblIsppa, ui->lblVoltage, ui->lblTimer,
+        ui->lblDC, ui->lblPeriod, ui->lblName
+    };
+    for (QLineEdit *edit : localEditableFields) {
+        edit->setStyleSheet(isEdit ? editStyle : viewStyle);
+        SetUnderline(edit, isEdit);
+    }
+    UpdateLocalDerivedValues();
     UpdateBtnState();
 }
 
@@ -771,4 +936,3 @@ void MainWindowHIFU::UpdateBtnState()
         }
     }
 }
-

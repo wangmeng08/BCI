@@ -491,7 +491,7 @@ color: rgb(255, 255, 0);</string>
                       <string notr="true">color:rgba(255,255,255,153)</string>
                      </property>
                      <property name="text">
-                      <string>Power(W):</string>
+                      <string>Power(mW/cm²):</string>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignBottom|Qt::AlignHCenter</set>
@@ -510,7 +510,7 @@ color: rgb(255, 255, 0);</string>
                       <string notr="true">color:rgba(255,255,255,153)</string>
                      </property>
                      <property name="text">
-                      <string>DC(%):</string>
+                      <string>Duty Cycle(%):</string>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignBottom|Qt::AlignHCenter</set>

@@ -2,6 +2,7 @@
 #include "ui_hifupulsetrainadvance.h"
 #include "db.h"
 
+#include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
 
@@ -32,8 +33,27 @@ void HifuPulseTrainAdvance::InitUiState()
         ui->editStimInterval,
         ui->editPulseTrainDuration
     };
-    for (QLineEdit *edit : edits)
+    const QFont valueFont(QStringLiteral("Alibaba PuHuiTi 2.0 55 Regular"), 26);
+    for (QLineEdit *edit : edits) {
+        edit->setFont(valueFont);
         edit->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
+    }
+
+    const QFont labelFont(QStringLiteral("Alibaba PuHuiTi 2.0 55 Regular"), 24);
+    const QList<QLabel *> labels = {
+        ui->labelFrequency,
+        ui->labelIsppa,
+        ui->labelIspta,
+        ui->labelPower,
+        ui->labelPri,
+        ui->labelPd,
+        ui->labelDutyCycle,
+        ui->labelPulseTrainDuration,
+        ui->labelStimInterval,
+        ui->labelStimDuration
+    };
+    for (QLabel *label : labels)
+        label->setFont(labelFont);
 
     ui->editIspta->setReadOnly(true);
     ui->editPower->setReadOnly(true);
@@ -66,20 +86,49 @@ void HifuPulseTrainAdvance::LoadFromProfile(const Profile *profile)
     setLineValue(ui->editPri, profile->period, 1);
     setLineValue(ui->editDutyCycle, profile->dc, 1);
     setLineValue(ui->editPulseTrainDuration, profile->timer, 1);
-    setLineValue(ui->editStimDuration, 150.0, 1);
-    setLineValue(ui->editStimInterval, 0.7, 1);
+    setLineValue(ui->editStimDuration, profile->stimDurationMs / 1000.0, 1);
+    setLineValue(ui->editStimInterval, profile->stimIntervalMs / 1000.0, 1);
     UpdateDerivedValues();
 }
 
 void HifuPulseTrainAdvance::SetEditMode(bool enabled)
 {
-    Q_UNUSED(enabled);
-    ui->editIsppa->setEnabled(true);
-    ui->editPri->setEnabled(true);
-    ui->editDutyCycle->setEnabled(true);
-    ui->editStimDuration->setEnabled(true);
-    ui->editStimInterval->setEnabled(true);
-    ui->editPulseTrainDuration->setEnabled(true);
+    const QString editStyle = QStringLiteral(
+                "color: rgb(111,217,236); font-size: 26px; "
+                "background: transparent; border: none;");
+    const QString viewStyle = QStringLiteral(
+                "color: rgb(255,255,255); font-size: 26px; "
+                "background: transparent; border: none;");
+    const QList<QLineEdit *> editableFields = {
+        ui->editIsppa,
+        ui->editPri,
+        ui->editDutyCycle,
+        ui->editStimDuration,
+        ui->editStimInterval,
+        ui->editPulseTrainDuration
+    };
+    for (QLineEdit *edit : editableFields) {
+        edit->setEnabled(true);
+        edit->setReadOnly(!enabled);
+        edit->setStyleSheet(enabled ? editStyle : viewStyle);
+        QFont font = edit->font();
+        font.setUnderline(enabled);
+        edit->setFont(font);
+    }
+
+    const QList<QLineEdit *> readOnlyFields = {
+        ui->editIspta,
+        ui->editPower,
+        ui->editFrequency,
+        ui->editPd
+    };
+    for (QLineEdit *edit : readOnlyFields) {
+        edit->setReadOnly(true);
+        edit->setStyleSheet(viewStyle);
+        QFont font = edit->font();
+        font.setUnderline(false);
+        edit->setFont(font);
+    }
 }
 
 void HifuPulseTrainAdvance::ResetProgress()

@@ -29,7 +29,9 @@ protected:
     QLabel *GetStateIcon() override;
     void SendInitCommand() override;
     void SetTimerInfo() override;
+    void OnEmitTimerExpired() override;
     void OnSonicStarted(uint8_t addr) override;
+    void OnSonicFinished() override;
     void OnSonicStopped() override;
 
 private:
@@ -65,6 +67,8 @@ private:
     void PulseTrainTick();
     void PulseTrainDisplayTick();
     int PulseTrainCount() const;
+    void RebuildLocalLayout();
+    void UpdateLocalDerivedValues();
     void SetAdvanceBtnState();
     void SetEditMode(bool isEdit);
 
@@ -74,6 +78,8 @@ private:
     QVector<QLineEdit *> m_VectorListDelay;
     QVector<QLineEdit *> m_VectorListFreq;
     QVector<QLineEdit *> m_VectorListHCD;
+    QLabel *m_LocalPdTitle = nullptr;
+    QLabel *m_LocalPdValue = nullptr;
     HifuPulseTrainAdvance *m_PulseTrainAdvance = nullptr;
     QTimer *m_PulseTrainTimer = nullptr;
     QTimer *m_PulseTrainDisplayTimer = nullptr;

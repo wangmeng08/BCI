@@ -76,7 +76,9 @@ protected:
     virtual void SendInitCommand() = 0;
     virtual void SetTimerInfo() = 0;
     virtual void UpdateBtnState() = 0;
+    virtual void OnEmitTimerExpired();
     virtual void OnSonicStarted(uint8_t addr);
+    virtual void OnSonicFinished();
     virtual void OnSonicStopped();
 
     QByteArray FromUint32(uint32_t value);

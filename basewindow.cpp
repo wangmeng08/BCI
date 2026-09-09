@@ -49,8 +49,10 @@ void BaseWindow::EmitTimerJump()
     m_CurrentTime = m_CurrentTime - m_timerIntervalMs;
     if(m_CurrentTime <= 0)
     {
-        OnClickOff();
         m_CurrentTime = 0;
+        EmitTimerStop();
+        OnEmitTimerExpired();
+        return;
     }
     SetTimerInfo();
 }
@@ -169,7 +171,7 @@ void BaseWindow::ReadDataSystem(QByteArray data)
     uint8_t commandType = static_cast<uint8_t>(data[3]);
     switch(commandType)
     {
-    case 0x03:
+    case 0x03: {
         if (data.size() < 11)
             return;
         uint32_t deviceStatus = GetValueFromQByteArray(data, 7, 4);
@@ -178,6 +180,10 @@ void BaseWindow::ReadDataSystem(QByteArray data)
         else
             m_ConnectState = static_cast<ConnectState>(deviceStatus);
         SetConnectState(m_ConnectState);
+        break;
+    }
+    case 0xFB:
+        OnSonicFinished();
         break;
     }
 }
@@ -220,6 +226,22 @@ void BaseWindow::OnCommandAccepted(uint8_t commandId, uint8_t addr)
 void BaseWindow::OnSonicStarted(uint8_t addr)
 {
     Q_UNUSED(addr);
+}
+
+void BaseWindow::OnEmitTimerExpired()
+{
+    SetTimerInfo();
+}
+
+void BaseWindow::OnSonicFinished()
+{
+    OnSonicStopped();
+    m_EmitStartPending = false;
+    SetEmitState(EmitState::IDLE);
+    UpdateBtnState();
+    EmitTimerStop();
+    m_CurrentTime = 0;
+    SetTimerInfo();
 }
 
 void BaseWindow::OnSonicStopped()
