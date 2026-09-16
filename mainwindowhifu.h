@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QLineEdit>
+#include <QElapsedTimer>
 #include "basewindow.h"
 #include "datamanager.h"
 #include <QtCharts>
@@ -67,6 +68,8 @@ private:
     void PulseTrainTick();
     void PulseTrainDisplayTick();
     int PulseTrainCount() const;
+    int PulseTrainPeriodMs() const;
+    void UpdatePulseTrainProgressFromClock();
     void RebuildLocalLayout();
     void UpdateLocalDerivedValues();
     void SetAdvanceBtnState();
@@ -90,6 +93,8 @@ private:
     int m_PulseTrainPulseTimerMs = 0;
     int m_PulseTrainTotalDurationMs = 0;
     int m_PulseTrainRemainingMs = 0;
+    int m_PulseTrainElapsedBeforeResumeMs = 0;
+    QElapsedTimer m_PulseTrainElapsedTimer;
     bool m_PulseTrainActive = false;
     bool m_PulseTrainPaused = false;
     bool m_PulseTrainRecorded = false;

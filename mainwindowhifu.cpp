@@ -541,10 +541,11 @@ void MainWindowHIFU::StartPulseTrain()
     m_PulseTrainProfile = next;
     OnCurrentProfileChange(prev, m_PulseTrainProfile);
 
-    m_PulseTrainIntervalMs = qMax(1, m_PulseTrainProfile->stimIntervalMs);
     m_PulseTrainPulseTimerMs = qMax(1, m_PulseTrainAdvance->pulseTrainDurationMs());
+    m_PulseTrainIntervalMs = PulseTrainPeriodMs();
     m_PulseTrainTotalDurationMs = qMax(1, m_PulseTrainProfile->stimDurationMs);
     m_PulseTrainRemainingMs = m_PulseTrainTotalDurationMs;
+    m_PulseTrainElapsedBeforeResumeMs = 0;
     m_PulseTrainTotalCount = PulseTrainCount();
     m_PulseTrainSentCount = 0;
     m_PulseTrainActive = true;
@@ -568,6 +569,7 @@ void MainWindowHIFU::StartPulseTrain()
     SetTimerInfo();
     m_PulseTrainAdvance->UpdateProgress(0, m_PulseTrainRemainingMs,
                                         m_PulseTrainTotalDurationMs);
+    m_PulseTrainElapsedTimer.restart();
     m_PulseTrainDisplayTimer->start();
     m_PulseTrainTimer->setInterval(m_PulseTrainIntervalMs);
     PulseTrainTick();
@@ -577,6 +579,8 @@ void MainWindowHIFU::StartPulseTrain()
 
 void MainWindowHIFU::StopPulseTrain(bool sendStopCommand)
 {
+    if (m_PulseTrainActive)
+        UpdatePulseTrainProgressFromClock();
     if (m_PulseTrainTimer)
         m_PulseTrainTimer->stop();
     if (m_PulseTrainDisplayTimer)
@@ -587,6 +591,7 @@ void MainWindowHIFU::StopPulseTrain(bool sendStopCommand)
     const int elapsedMs = qMax(0, totalMs - remainingMs);
     m_PulseTrainActive = false;
     m_PulseTrainPaused = false;
+    m_PulseTrainElapsedBeforeResumeMs = 0;
     RecordPulseTrainTreatmentIfNeeded(elapsedMs);
     m_PulseTrainStarted = false;
     m_CurrentTime = remainingMs;
@@ -662,12 +667,17 @@ void MainWindowHIFU::PausePulseTrain()
     if (!m_PulseTrainActive)
         return;
 
+    UpdatePulseTrainProgressFromClock();
     if (m_PulseTrainTimer)
         m_PulseTrainTimer->stop();
     if (m_PulseTrainDisplayTimer)
         m_PulseTrainDisplayTimer->stop();
     m_PulseTrainActive = false;
     m_PulseTrainPaused = true;
+    m_PulseTrainElapsedBeforeResumeMs =
+            qBound(0,
+                   m_PulseTrainTotalDurationMs - m_PulseTrainRemainingMs,
+                   m_PulseTrainTotalDurationMs);
     SetEmitState(EmitState::IDLE);
     UpdateBtnState();
     if (m_PulseTrainAdvance)
@@ -691,6 +701,7 @@ void MainWindowHIFU::ResumePulseTrain()
         m_PulseTrainDisplayTimer->start();
     if (m_PulseTrainTimer)
         m_PulseTrainTimer->setInterval(m_PulseTrainIntervalMs);
+    m_PulseTrainElapsedTimer.restart();
     PulseTrainTick();
     if (m_PulseTrainActive && m_PulseTrainTimer)
         m_PulseTrainTimer->start();
@@ -723,14 +734,7 @@ void MainWindowHIFU::PulseTrainDisplayTick()
     if (!m_PulseTrainActive)
         return;
 
-    m_PulseTrainRemainingMs = qMax(0, m_PulseTrainRemainingMs - m_timerIntervalMs);
-    m_CurrentTime = m_PulseTrainRemainingMs;
-    SetTimerInfo();
-    if (m_PulseTrainAdvance) {
-        const int elapsedMs = qMax(0, m_PulseTrainTotalDurationMs - m_PulseTrainRemainingMs);
-        m_PulseTrainAdvance->UpdateProgress(elapsedMs, m_PulseTrainRemainingMs,
-                                            m_PulseTrainTotalDurationMs);
-    }
+    UpdatePulseTrainProgressFromClock();
     if (m_PulseTrainRemainingMs <= 0)
         StopPulseTrain(true);
 }
@@ -743,13 +747,41 @@ int MainWindowHIFU::PulseTrainCount() const
     const int stimDurationMs = m_PulseTrainProfile.isNull()
             ? qMax(1, qRound(m_PulseTrainAdvance->stimDurationS() * 1000.0))
             : qMax(1, m_PulseTrainProfile->stimDurationMs);
-    const int intervalMs = m_PulseTrainProfile.isNull()
-            ? qMax(1, qRound(m_PulseTrainAdvance->stimIntervalS() * 1000.0))
-            : qMax(1, m_PulseTrainProfile->stimIntervalMs);
     const int pulseTimerMs = qMax(1, m_PulseTrainAdvance->pulseTrainDurationMs());
+    const int intervalMs = PulseTrainPeriodMs();
     if (stimDurationMs <= pulseTimerMs)
         return 1;
     return ((stimDurationMs - pulseTimerMs) / intervalMs) + 1;
+}
+
+int MainWindowHIFU::PulseTrainPeriodMs() const
+{
+    if (!m_PulseTrainAdvance)
+        return 1;
+
+    const int pulseTimerMs = qMax(1, m_PulseTrainAdvance->pulseTrainDurationMs());
+    const int stimIntervalMs = m_PulseTrainProfile.isNull()
+            ? qMax(0, qRound(m_PulseTrainAdvance->stimIntervalS() * 1000.0))
+            : qMax(0, m_PulseTrainProfile->stimIntervalMs);
+    return stimIntervalMs <= 0 ? pulseTimerMs : stimIntervalMs;
+}
+
+void MainWindowHIFU::UpdatePulseTrainProgressFromClock()
+{
+    const qint64 elapsedSinceResume = m_PulseTrainElapsedTimer.isValid()
+            ? m_PulseTrainElapsedTimer.elapsed()
+            : 0;
+    const int elapsedMs = qBound(0,
+                                 m_PulseTrainElapsedBeforeResumeMs
+                                 + static_cast<int>(elapsedSinceResume),
+                                 m_PulseTrainTotalDurationMs);
+    m_PulseTrainRemainingMs = qMax(0, m_PulseTrainTotalDurationMs - elapsedMs);
+    m_CurrentTime = m_PulseTrainRemainingMs;
+    SetTimerInfo();
+    if (m_PulseTrainAdvance) {
+        m_PulseTrainAdvance->UpdateProgress(elapsedMs, m_PulseTrainRemainingMs,
+                                            m_PulseTrainTotalDurationMs);
+    }
 }
 
 void MainWindowHIFU::RebuildLocalLayout()
