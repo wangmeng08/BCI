@@ -102,8 +102,10 @@ void MainWindowLIFU::SendInitCommand()
                  .arg(delays.isEmpty() ? 0 : delays.last()));
     //SendCommandSetChannelDelay(delays);
 
-    SendCommandSetPri(static_cast<uint32_t>(qMax(0, periodMs)));
-    SendCommandSetPD(EncodePdUs(periodMs, dutyCycle));
+    if (!SendCommandSetPri(static_cast<uint32_t>(qMax(0, periodMs))))
+        return;
+    if (!SendCommandSetPD(EncodePdUs(periodMs, dutyCycle)))
+        return;
     SendCommandSetEmitTime(static_cast<uint32_t>(qMax(0, timerMs)));
 
 }
@@ -284,11 +286,13 @@ void MainWindowLIFU::OnCurrentProfileChange(QSharedPointer<ProfileLIFU> prev, QS
     }
     if(prev.isNull() || prev->period != curr->period)
     {
-        SendCommandSetPri(curr->period);
+        if (!SendCommandSetPri(curr->period))
+            return;
     }
     if(prev.isNull() || prev->period != curr->period || !SameDouble(prev->dutyc, curr->dutyc))
     {
-        SendCommandSetPD(EncodePdUs(curr->period, curr->dutyc));
+        if (!SendCommandSetPD(EncodePdUs(curr->period, curr->dutyc)))
+            return;
     }
     if(prev.isNull())
     {

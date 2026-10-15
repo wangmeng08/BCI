@@ -124,8 +124,10 @@ void MainWindowHIFU::SendInitCommand()
     // Keep Local On aligned with the working Advance pulse-train path.
     SendCommandSetIsppa(profile->isppa);
     //SendCommandSetFrequency(static_cast<uint32_t>(qRound(profile->freq)));
-    SendCommandSetPri(static_cast<uint32_t>(periodMs));
-    SendCommandSetPD(pdUs);
+    if (!SendCommandSetPri(static_cast<uint32_t>(periodMs)))
+        return;
+    if (!SendCommandSetPD(pdUs))
+        return;
     SendCommandSetEmitTime(static_cast<uint32_t>(qMax(0, profile->timer)));
 }
 
@@ -473,12 +475,14 @@ void MainWindowHIFU::OnCurrentProfileChange(QSharedPointer<Profile> prev, QShare
     }
     if(prev.isNull() || prev->period != curr->period)
     {
-        SendCommandSetPri(curr->period);
+        if (!SendCommandSetPri(curr->period))
+            return;
     }
     if(prev.isNull() || prev->period != curr->period || prev->dc != curr->dc)
     {
         const int periodMs = qMax(1, curr->period);
-        SendCommandSetPD(EncodePdUs(periodMs, curr->dc));
+        if (!SendCommandSetPD(EncodePdUs(periodMs, curr->dc)))
+            return;
     }
     if(prev.isNull() || prev->timer != curr->timer)
     {
@@ -539,7 +543,10 @@ void MainWindowHIFU::StartPulseTrain()
     next->CopyInfo(m_DataManager->m_CurrentProfile.get());
     ApplyPulseTrainAdvanceToProfile(next.get());
     m_PulseTrainProfile = next;
+    ResetCommandValidation();
     OnCurrentProfileChange(prev, m_PulseTrainProfile);
+    if (CommandValidationFailed())
+        return;
 
     m_PulseTrainPulseTimerMs = qMax(1, m_PulseTrainAdvance->pulseTrainDurationMs());
     m_PulseTrainIntervalMs = PulseTrainPeriodMs();

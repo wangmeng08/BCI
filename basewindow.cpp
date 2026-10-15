@@ -152,7 +152,14 @@ void BaseWindow::OnClickOn()
     }
     WriteCommLog(QStringLiteral("[MCU] configure and start requested"));
     m_EmitStartPending = true;
+    ResetCommandValidation();
     SendInitCommand();
+    if (CommandValidationFailed()) {
+        m_EmitStartPending = false;
+        SetEmitState(EmitState::ERROR);
+        UpdateBtnState();
+        return;
+    }
     SendCommandSystemEmit();
 }
 
@@ -308,20 +315,42 @@ void BaseWindow::SendCommandSetIsppa(double value)
                      .arg(value).arg(encodedValue));
 }
 
-void BaseWindow::SendCommandSetPD(uint32_t value)
+bool BaseWindow::SendCommandSetPD(uint32_t value)
 {
-    if (value > 100000 || value < 1)
-        return;
+    const int maxPD = 1000000;  //1000ms or 1s, console requirements
+    if (value > maxPD || value < 1) {
+        m_CommandValidationFailed = true;
+        const QString message = QStringLiteral(
+                    "Invalid PD: %1 us.\nAllowed range: 1-%2 us.\n"
+                    "Command was not sent and emission was not started.")
+                .arg(value)
+                .arg(maxPD);
+        WriteCommLog(QStringLiteral("[MCU] %1").arg(message));
+        MessageInfo::ShowWarning(message, QStringLiteral("Invalid Parameter"));
+        return false;
+    }
     SendCommandData4(0x12, value,
                      QStringLiteral("set PD=%1 us").arg(value));
+    return true;
 }
 
-void BaseWindow::SendCommandSetPri(uint32_t value)
+bool BaseWindow::SendCommandSetPri(uint32_t value)
 {
-    if (value > 1000 || value < 1)
-        return;
+    const int maxPri = 1000;  //1000ms or 1s, console requirements
+    if (value > maxPri || value < 1) {
+        m_CommandValidationFailed = true;
+        const QString message = QStringLiteral(
+                    "Invalid PRI: %1 ms.\nAllowed range: 1-%2 ms.\n"
+                    "Command was not sent and emission was not started.")
+                .arg(value)
+                .arg(maxPri);
+        WriteCommLog(QStringLiteral("[MCU] %1").arg(message));
+        MessageInfo::ShowWarning(message, QStringLiteral("Invalid Parameter"));
+        return false;
+    }
     SendCommandData4(0x0C, value,
                      QStringLiteral("set PRI=%1 ms").arg(value));
+    return true;
 }
 
 void BaseWindow::SendCommandSetChannelSwitch(int channelCount)
@@ -519,6 +548,16 @@ void BaseWindow::SetUnderline(QLineEdit *edit, bool enable)
 void BaseWindow::WriteCommLog(QString info)
 {
     emit EventManager::GetInstance()->writeLog(LogType::COMM, info);
+}
+
+void BaseWindow::ResetCommandValidation()
+{
+    m_CommandValidationFailed = false;
+}
+
+bool BaseWindow::CommandValidationFailed() const
+{
+    return m_CommandValidationFailed;
 }
 
 QByteArray BaseWindow::FromUint32(uint32_t value)

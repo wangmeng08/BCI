@@ -45,8 +45,8 @@ protected:
     void SendCommandSetFrequency(uint32_t value);
     void SendCommandSetHvout(double value);
     void SendCommandSetIsppa(double value);
-    void SendCommandSetPD(uint32_t value);
-    void SendCommandSetPri(uint32_t value);
+    bool SendCommandSetPD(uint32_t value);
+    bool SendCommandSetPri(uint32_t value);
 
     void SendCommandSetChannelSwitch(int channelCount);
     void SendCommandSetChannelDelay(const QVector<uint32_t>& delays);
@@ -69,6 +69,8 @@ protected:
     void SetUnderline(QLineEdit* edit, bool enable);
 
     void WriteCommLog(QString info);
+    void ResetCommandValidation();
+    bool CommandValidationFailed() const;
 
     virtual QLabel *GetConnectLabel() = 0;
     virtual QLabel *GetEmitLabel() = 0;
@@ -101,6 +103,7 @@ protected:
     ConnectState m_ConnectState = ConnectState::DISCONNECT;
     EmitState m_State = EmitState::IDLE;
     bool m_EmitStartPending = false;
+    bool m_CommandValidationFailed = false;
     DataManager *m_DataManager = nullptr;
 signals:
     void heartTimerStart();

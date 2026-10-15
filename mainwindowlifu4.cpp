@@ -101,8 +101,10 @@ void MainWindowLIFU4::SendInitCommand()
                  .arg(delays.isEmpty() ? 0 : delays.last()));
     //SendCommandSetChannelDelay(delays);
 
-    SendCommandSetPri(static_cast<uint32_t>(qMax(0, periodMs)));
-    SendCommandSetPD(EncodePdUs(periodMs, dutyCycle));
+    if (!SendCommandSetPri(static_cast<uint32_t>(qMax(0, periodMs))))
+        return;
+    if (!SendCommandSetPD(EncodePdUs(periodMs, dutyCycle)))
+        return;
     SendCommandSetEmitTime(static_cast<uint32_t>(qMax(0, timerMs)));
 }
 
